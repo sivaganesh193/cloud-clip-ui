@@ -1,17 +1,21 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { useColorScheme } from 'react-native';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarStyle: {
+          backgroundColor: isDarkMode ? '#121212' : '#ffffff',
+        },
         headerShown: false,
       }}>
       <Tabs.Screen
@@ -24,11 +28,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="sharedLinks"
         options={{
-          title: 'Explore',
+          title: 'Shared',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+            <TabBarIcon name={focused ? 'share-social' : 'share-social-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'person-circle' : 'person-circle-outline'} color={color} />
           ),
         }}
       />

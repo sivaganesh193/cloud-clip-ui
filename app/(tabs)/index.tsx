@@ -1,70 +1,195 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
+import React from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
 
-export default function HomeScreen() {
+export default function Homepage() {
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+
+  const handleShare = (title: string) => {
+    console.log(`Share link: ${title}`);
+  };
+
+  const data = "windows is best";
+  const device = "ASUS ROG";
+
+  const sharedData = [
+    { id: '1', device: 'Iphone 13', copiedText: 'apple is pro' },
+    { id: '2', device: 'OnePlus Nord CE Lite 3', copiedText: 'apple is noob' },
+    { id: '3', device: 'ASUS ROG', copiedText: 'windows is best' }
+  ];
+
+  // Find the index of the item that is highlighted
+  const highlightIndex = sharedData.findIndex(item => item.device === device);
+  console.log(highlightIndex);
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+    <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
+      <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
+        <ThemedText type="title">Welcome User!</ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={styles.mainClipContainer}>
+        <View style={[styles.mainClipContent, isDarkMode ? styles.mainClipContentDark : styles.mainClipContentLight]}>
+          <View style={{ flex: 1 }}>
+            <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{data}</Text>
+            <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Copied from: {device}</Text>
+          </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity onPress={() => handleShare(data)}>
+              <Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleShare(data)}>
+              <Ionicons name="share-social-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+      <ThemedText type="subtitle">Your Devices: </ThemedText>
+      <FlatList
+        data={sharedData}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <View style={isDarkMode ? styles.itemContainerDark : styles.itemContainerLight}>
+            <View style={styles.itemContent}>
+              <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
+                {item.device}
+              </Text>
+              <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>
+                Recent Copy: {item.copiedText}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => handleShare(item.device)}>
+              <Ionicons name={index == highlightIndex ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={index == highlightIndex ? 'green' : (isDarkMode ? 'white' : 'black')} />
+            </TouchableOpacity>
+          </View>
+        )}
+        contentContainerStyle={styles.listContent}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  safeAreaLight: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    padding: 16,
+  },
+  safeAreaDark: {
+    flex: 1,
+    backgroundColor: '#121212',
+    padding: 16,
+  },
+  containerLight: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    padding: 16,
+    borderRadius: 16,
+  },
+  containerDark: {
+    flex: 1,
+    backgroundColor: '#121212',
+    padding: 16,
+    borderRadius: 16,
+  },
+  listContent: {
+    paddingBottom: 16,
+  },
+  itemContainerLight: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  itemContainerDark: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    backgroundColor: '#1e1e1e',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  itemTitleLight: {
+    fontSize: 18,
+    color: '#000',
+  },
+  itemTitleDark: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  itemTitleHighlightedLight: {
+    fontSize: 18,
+    color: '#00796b', // Teal color for highlighted title
+  },
+  itemTitleHighlightedDark: {
+    fontSize: 18,
+    color: '#4db6ac', // Light teal color for highlighted title in dark mode
+  },
+  itemExpiryLight: {
+    fontSize: 14,
+    color: '#666',
+  },
+  itemExpiryDark: {
+    fontSize: 14,
+    color: '#aaa',
+  },
+  itemExpiryHighlightedLight: {
+    fontSize: 14,
+    color: '#004d40', // Dark teal color for highlighted expiry text
+  },
+  itemExpiryHighlightedDark: {
+    fontSize: 14,
+    color: '#00332c', // Darker teal color for highlighted expiry text in dark mode
+  },
+  itemContent: {
+    flex: 1,
+  },
+  mainClipContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },
+  mainClipContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    padding: 10,
+    borderRadius: 5,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  mainClipContentLight: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 3,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  mainClipContentDark: {
+    backgroundColor: '#1e1e1e',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    marginLeft: 10,
   },
 });
