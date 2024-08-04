@@ -1,30 +1,56 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, FlatList, Clipboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { collection, getDocs } from "firebase/firestore"; 
+import {db} from '../../firebaseConfig';
 
 export default function Homepage() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
-  const handleShare = (title: string) => {
-    console.log(`Share link: ${title}`);
+  const [device, setDevice] = useState("ASUS Rog");
+  const [data, setData] = useState("windows is best");
+  const [user, setUser] = useState("siv19");
+  const [dbData, setDbData] = useState<any[]>([]); // Define the type for the state
+
+  const handleShare = (device: string, text: string) => {
+    setData(text);
+    setDevice(device);
   };
 
-  const data = "windows is best";
-  const device = "ASUS ROG";
+  const handleCopy = (text:string) => {
+    Clipboard.setString(text)
+  }
 
-  const sharedData = [
-    { id: '1', device: 'Iphone 13', copiedText: 'apple is pro' },
-    { id: '2', device: 'OnePlus Nord CE Lite 3', copiedText: 'apple is noob' },
-    { id: '3', device: 'ASUS ROG', copiedText: 'windows is best' }
-  ];
+  const generateRandomKey = () => Math.random().toString(36).substr(2, 9);
 
-  // Find the index of the item that is highlighted
-  const highlightIndex = sharedData.findIndex(item => item.device === device);
-  console.log(highlightIndex);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const arrayData:any[] = [];
+        const querySnapshot = await getDocs(collection(db, "devices"));
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if(data.userId == user){
+            arrayData.push({
+              device: data.name,
+              copiedText: data.latestText,
+              id: generateRandomKey()
+            })
+          }
+        });
+        setDbData(arrayData);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  console.log(dbData);
   return (
     <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
       <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
@@ -37,10 +63,10 @@ export default function Homepage() {
             <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Copied from: {device}</Text>
           </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={() => handleShare(data)}>
+            <TouchableOpacity onPress={() => handleCopy(data)}>
               <Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleShare(data)}>
+            <TouchableOpacity onPress={() => handleCopy(data)}>
               <Ionicons name="share-social-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
             </TouchableOpacity>
           </View>
@@ -48,7 +74,7 @@ export default function Homepage() {
       </View>
       <ThemedText type="subtitle">Your Devices: </ThemedText>
       <FlatList
-        data={sharedData}
+        data={dbData}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <View style={isDarkMode ? styles.itemContainerDark : styles.itemContainerLight}>
@@ -60,8 +86,8 @@ export default function Homepage() {
                 Recent Copy: {item.copiedText}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => handleShare(item.device)}>
-              <Ionicons name={index == highlightIndex ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={index == highlightIndex ? 'green' : (isDarkMode ? 'white' : 'black')} />
+            <TouchableOpacity onPress={() => handleShare(item.device,item.copiedText)}>
+              <Ionicons name={item.device == device ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={item.device == device ? 'green' : (isDarkMode ? 'white' : 'black')} />
             </TouchableOpacity>
           </View>
         )}
