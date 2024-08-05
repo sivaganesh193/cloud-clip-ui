@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import Header from '@/components/Header';
+import { useNavigation } from 'expo-router';
 
 const sharedData = [
   { id: '1', title: 'Shared Link 1', expiresIn: '2 hours' },
@@ -16,6 +18,7 @@ const sharedData = [
 export default function SharedLinks() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  const navigation = useNavigation();
 
   const handleShare = (title: string) => {
     console.log(`Share link: ${title}`);
@@ -23,19 +26,22 @@ export default function SharedLinks() {
 
   return (
     <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
+      <Header navigation={navigation} />
       <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-        <ThemedText type="title">Shared: </ThemedText>
+        <ThemedText type="title" lightColor='black' darkColor='black'>Shared Links: </ThemedText>
+        <Text>{'\n'}</Text>
+        {/* <ThemedText >{'\n'} </ThemedText> */}
         <FlatList
           data={sharedData}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={isDarkMode ? styles.itemContainerDark : styles.itemContainerLight}>
+            <View style={isDarkMode ? styles.itemContainerLight : styles.itemContainerLight}>
               <View>
                 <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.title}</Text>
                 <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.expiresIn}</Text>
               </View>
               <TouchableOpacity onPress={() => handleShare(item.title)}>
-                <Ionicons name="share-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
+                <Ionicons name="share-outline" size={24} color={'black'} />
               </TouchableOpacity>
             </View>
           )}
@@ -49,25 +55,25 @@ export default function SharedLinks() {
 const styles = StyleSheet.create({
   safeAreaLight: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fff',
     padding: 16,
   },
   safeAreaDark: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#fff',
     padding: 16,
   },
   containerLight: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 16,
+    // borderRadius: 16,
   },
   containerDark: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 16,
+    // borderRadius: 16,
   },
   listContent: {
     paddingBottom: 16,
@@ -79,7 +85,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f0f0',
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
@@ -93,7 +99,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderRadius: 8,
-    backgroundColor: '#1e1e1e',
+    backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
@@ -106,11 +112,11 @@ const styles = StyleSheet.create({
   },
   itemTitleDark: {
     fontSize: 18,
-    color: '#fff',
+    color: '#000',
   },
   itemExpiryLight: {
     fontSize: 14,
-    color: '#666',
+    color: '#aaa',
   },
   itemExpiryDark: {
     fontSize: 14,

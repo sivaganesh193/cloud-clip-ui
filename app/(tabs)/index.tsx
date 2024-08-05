@@ -4,8 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { collection, getDocs } from "firebase/firestore"; 
-import {db} from '../../firebaseConfig';
+import { collection, getDocs } from "firebase/firestore";
+import { db } from '../../firebaseConfig';
+import Header from '../../components/Header';
+import Description from '@/components/Description';
+import { useNavigation } from 'expo-router';
 
 export default function Homepage() {
   const colorScheme = useColorScheme();
@@ -21,25 +24,27 @@ export default function Homepage() {
     setDevice(device);
   };
 
-  const handleCopy = (text:string) => {
-    Clipboard.setString(text)
-  }
+  const handleCopy = (text: string) => {
+    Clipboard.setString(text);
+  };
 
   const generateRandomKey = () => Math.random().toString(36).substr(2, 9);
 
+  const navigation = useNavigation();
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const arrayData:any[] = [];
+        const arrayData: any[] = [];
         const querySnapshot = await getDocs(collection(db, "devices"));
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if(data.userId == user){
+          if (data.userId == user) {
             arrayData.push({
               device: data.name,
               copiedText: data.latestText,
               id: generateRandomKey()
-            })
+            });
           }
         });
         setDbData(arrayData);
@@ -52,8 +57,12 @@ export default function Homepage() {
 
   console.log(dbData);
   return (
-    <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
-      <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
+    <SafeAreaView style={styles.safeArea}>
+      <Header navigation={navigation} />
+      <ThemedView style={styles.container}>
+        <Description />
+      </ThemedView>
+      {/* <ThemedView style={styles.container}>
         <ThemedText type="title">Welcome User!</ThemedText>
       </ThemedView>
       <View style={styles.mainClipContainer}>
@@ -86,39 +95,30 @@ export default function Homepage() {
                 Recent Copy: {item.copiedText}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => handleShare(item.device,item.copiedText)}>
+            <TouchableOpacity onPress={() => handleShare(item.device, item.copiedText)}>
               <Ionicons name={item.device == device ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={item.device == device ? 'green' : (isDarkMode ? 'white' : 'black')} />
             </TouchableOpacity>
           </View>
         )}
         contentContainerStyle={styles.listContent}
-      />
-    </SafeAreaView>
+      /> */}
+    </SafeAreaView >
   );
 }
 
 const styles = StyleSheet.create({
-  safeAreaLight: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fff', // Set background color to white
     padding: 16,
   },
-  safeAreaDark: {
+  container: {
+    alignItems: 'center',
     flex: 1,
-    backgroundColor: '#121212',
-    padding: 16,
-  },
-  containerLight: {
-    flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fff', // Set background color to white
     padding: 16,
     borderRadius: 16,
-  },
-  containerDark: {
-    flex: 1,
-    backgroundColor: '#121212',
-    padding: 16,
-    borderRadius: 16,
+    overflow: 'hidden'
   },
   listContent: {
     paddingBottom: 16,
