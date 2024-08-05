@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   itemContainerDark: {
     flexDirection: 'row',

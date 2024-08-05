@@ -3,14 +3,12 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDQxWWZ-2LYPpE5JA0e9HxqSkgXU8T15XY",
-  authDomain: "cloud-clip-6b5b0.firebaseapp.com",
-  databaseURL: "https://cloud-clip-6b5b0-default-rtdb.firebaseio.com",
-  projectId: "cloud-clip-6b5b0",
-  storageBucket: "cloud-clip-6b5b0.appspot.com",
-  messagingSenderId: "1022149034466",
-  appId: "1:1022149034466:web:6846f8c12c874c9d7f79bb",
-  measurementId: "G-TPLKB0TCW5"
+  apiKey: "AIzaSyCLz2cD3T_LLmKNZr8I9y9eGL2bcn4Cc14",
+  authDomain: "cloud-clip-d169d.firebaseapp.com",
+  projectId: "cloud-clip-d169d",
+  storageBucket: "cloud-clip-d169d.appspot.com",
+  messagingSenderId: "233163298991",
+  appId: "1:233163298991:web:fa8764c35933ca02409c5a"
 };
 
 
