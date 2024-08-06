@@ -6,8 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
 import { useNavigation } from 'expo-router';
-import { addDoc, collection, doc, getDocs, setDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/firebaseConfig';
+import { createClipboardEntry } from '@/service/firebaseService';
 
 const sharedData = [
 	{ id: '1', title: 'Shared Link 1', expiresIn: '2 hours' },
@@ -28,33 +27,39 @@ export default function SharedLinks() {
 		os: string;
 	}
 
-	// Function to create a new device
-	const createDevice = async (device: Device): Promise<void> => {
+	const createMultipleClipboardEntries = async () => {
 		try {
-			const devicesRef = collection(db, 'devices');
-			const docRef = await addDoc(devicesRef, {
-				...device,
-				createdAt: Timestamp.now(),
-				updateAt: Timestamp.now()
-			});
-			console.log(`Device with ID ${docRef.id} created successfully`);
+			const entries = [
+				// Entries with userId 'k7vz5bk1K1cnusnUugBtEUreb2q2' and deviceId '36244b68-4a45-4cb0-867a-dc61d46326df'
+				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 1' },
+				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 2' },
+				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 3' },
+	
+				// Entries with userId 'k7vz5bk1K1cnusnUugBtEUreb2q2' and different deviceId
+				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device4', content: 'Clipboard content 4' },
+				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device5', content: 'Clipboard content 5' },
+				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device6', content: 'Clipboard content 6' },
+	
+				// Entries with different userId
+				{ userId: 'user8', deviceId: 'device8', content: 'Clipboard content 7' },
+				{ userId: 'user9', deviceId: 'device9', content: 'Clipboard content 8' },
+				{ userId: 'user10', deviceId: 'device10', content: 'Clipboard content 9' },
+				{ userId: 'user11', deviceId: 'device11', content: 'Clipboard content 10' },
+			];
+	
+			for (const entry of entries) {
+				const id = await createClipboardEntry(entry);
+				console.log(`Created clipboard entry with ID: ${id}`);
+			}
 		} catch (error) {
-			console.error('Error creating device: ', error);
+			console.error('Error creating multiple clipboard entries: ', error);
 		}
 	};
-
-	// Example usage
-	const newDevice: Device = {
-		userId: 'sQPBzrUgnzgY7MAo3aRr',
-		deviceName: "Asus ROG",
-		os: 'Windows 11'
-	};
-
 	
 
 	const handleShare = (title: string) => {
 		console.log(`Share link: ${title}`);
-		createDevice(newDevice);
+		createMultipleClipboardEntries();
 	};
 
 	return (

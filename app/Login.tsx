@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, TextInput, StyleSheet, useColorScheme, Alert, TouchableOpacity, Text, Dimensions, Modal, TouchableWithoutFeedback } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
-import { auth, db } from '../firebaseConfig'; // Import Firebase auth
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, UserCredential } from 'firebase/auth';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { AuthContext } from '@/auth/AuthContext';
-import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { createUser } from '@/service/firebaseService';
 
 const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onClose: () => void; onSuccess: () => void; }) => {
   const [username, setUsername] = useState('');
@@ -69,28 +69,13 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
       let message = "An error occurred";
       if (error.code === 'auth/user-not-found') {
         message = "No user found with this email.";
-      } else if (error.code === 'auth/wrong-password') {
+      } else if (error.code === 'auth/invalid-credential') {
         message = "Incorrect password.";
       }
       Alert.alert("Login Error", message);
     }
   };
 
-  const createUser = async (email: string, name: string) => {
-    try {
-      const userRef = doc(collection(db, 'users'));
-      const user = {
-        email: email,
-        name: name,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-      await setDoc(userRef, user);
-      console.log('User added with ID: ', userRef.id);
-    } catch (error) {
-      console.error('Error adding user: ', error);
-    }
-  };
 
   const handleSignUp = async () => {
     if (!username || !password || !confirmPassword || !name) {
@@ -104,8 +89,12 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, username, password);
-      createUser(username,name);
+      const userCredential: UserCredential = await createUserWithEmailAndPassword(auth, username, password);
+      const user = userCredential.user;
+      createUser(user.uid, {
+        email: username,
+        name: name
+      });
       onSuccess();
       onClose();
       resetFields(); // Clear fields on successful sign-up
