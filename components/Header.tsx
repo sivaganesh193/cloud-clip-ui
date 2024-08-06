@@ -1,18 +1,25 @@
 import LoginPopup from '@/app/Login';
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, Button } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
+import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
 
 const Header = ({ navigation }: { navigation: any }) => {
-
-  // const navigation = useNavigation();
-
   const [isModalVisible, setModalVisible] = useState(false);
-
+  const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
+ 
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
+
   const handleSuccess = () => {
-    // Handle successful login or sign-up
     closeModal();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout(); // Call logout from AuthContext
+    } catch (error) {
+      console.error('Error logging out: ', error);
+    }
   };
 
   return (
@@ -21,9 +28,15 @@ const Header = ({ navigation }: { navigation: any }) => {
         <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.headerTitle}>Cloud-Clip</Text>
       </View>
-      <TouchableOpacity style={styles.loginButton} onPress={openModal}>
-        <Text style={styles.loginButtonText}>Log In</Text>
-      </TouchableOpacity>
+      {!user ? (
+        <TouchableOpacity style={styles.loginButton} onPress={openModal}>
+          <Text style={styles.loginButtonText}>Log In</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogout}>
+          <Text style={styles.loginButtonText}>Log Out</Text>
+        </TouchableOpacity>
+      )}
       <LoginPopup
         isVisible={isModalVisible}
         onClose={closeModal}
@@ -60,7 +73,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   loginButtonText: {
-
     color: '#fff',
     fontWeight: 'bold',
   },

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, FlatList, Clipboard } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState, useContext } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, FlatList, Clipboard, ScrollView } from 'react-native';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -9,15 +9,20 @@ import { db } from '../../firebaseConfig';
 import Header from '../../components/Header';
 import Description from '@/components/Description';
 import { useNavigation } from 'expo-router';
+import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
+import ClipboardScreen from '@/components/Clipboard';
 
 export default function Homepage() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
   const [device, setDevice] = useState("ASUS Rog");
-  const [data, setData] = useState("windows is best");
-  const [user, setUser] = useState("siv19");
+  const [data, setData] = useState("In the realm of operating systems, Windows has long been a dominant player, offering a broad range of functionalities and user-friendly features that cater to a diverse audience. With its rich graphical user interface, extensive support for software applications, and robust security features, Windows provides a versatile environment for both personal and professional use. Over the years, it has evolved through numerous versions, each bringing enhancements in performance, usability, and integration with modern technologies. From its early days to the latest updates, Windows has consistently strived to balance innovation with stability, making it a preferred choice for many users around the world. Whether it’s for gaming, productivity, or everyday tasks, the adaptability and wide compatibility of Windows continue to solidify its position as a leading operating system in the industry.");
+
   const [dbData, setDbData] = useState<any[]>([]); // Define the type for the state
+
+  const { user } = useContext(AuthContext); // Use AuthContext to get the user
+  const navigation = useNavigation();
 
   const handleShare = (device: string, text: string) => {
     setData(text);
@@ -30,92 +35,86 @@ export default function Homepage() {
 
   const generateRandomKey = () => Math.random().toString(36).substr(2, 9);
 
-  const navigation = useNavigation();
-  
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const arrayData: any[] = [];
-        const querySnapshot = await getDocs(collection(db, "devices"));
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.userId == user) {
-            arrayData.push({
-              device: data.name,
-              copiedText: data.latestText,
-              id: generateRandomKey()
-            });
-          }
-        });
-        setDbData(arrayData);
-      } catch (error) {
-        console.error("Error fetching data: ", error);
+      if (user) {
+        try {
+          const arrayData: any[] = [];
+          const querySnapshot = await getDocs(collection(db, "devices"));
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.userId === user.uid) { // Use user.uid for comparison
+              arrayData.push({
+                device: data.name,
+                copiedText: data.latestText,
+                id: generateRandomKey()
+              });
+            }
+          });
+          setDbData(arrayData);
+        } catch (error) {
+          console.error("Error fetching data: ", error);
+        }
       }
     };
     fetchData();
-  }, []);
+  }, [user]); // Re-fetch data when user changes
 
-  console.log(dbData);
   return (
     <SafeAreaView style={styles.safeArea}>
       <Header navigation={navigation} />
-      <ThemedView style={styles.container}>
-        <Description />
-      </ThemedView>
-      {/* <ThemedView style={styles.container}>
-        <ThemedText type="title">Welcome User!</ThemedText>
-      </ThemedView>
-      <View style={styles.mainClipContainer}>
-        <View style={[styles.mainClipContent, isDarkMode ? styles.mainClipContentDark : styles.mainClipContentLight]}>
-          <View style={{ flex: 1 }}>
-            <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{data}</Text>
-            <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Copied from: {device}</Text>
-          </View>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={() => handleCopy(data)}>
-              <Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleCopy(data)}>
-              <Ionicons name="share-social-outline" size={24} color={isDarkMode ? 'white' : 'black'} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-      <ThemedText type="subtitle">Your Devices: </ThemedText>
-      <FlatList
-        data={dbData}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <View style={isDarkMode ? styles.itemContainerDark : styles.itemContainerLight}>
-            <View style={styles.itemContent}>
-              <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
-                {item.device}
-              </Text>
-              <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>
-                Recent Copy: {item.copiedText}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => handleShare(item.device, item.copiedText)}>
-              <Ionicons name={item.device == device ? "checkmark-circle" : "checkmark-circle-outline"} size={24} color={item.device == device ? 'green' : (isDarkMode ? 'white' : 'black')} />
-            </TouchableOpacity>
-          </View>
+      <ThemedView style={styles.centerContainer}>
+        {!user ? (
+          <Description />
+        ) : (
+          <>
+            <ThemedView style={styles.container}>
+              <View style={styles.headerWithButton}>
+                <ThemedText type="subtitle">Your latest copied text</ThemedText>
+                <TouchableOpacity style={styles.copyButton} onPress={() => handleCopy(data)}>
+                  <Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+                  <Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
+                </TouchableOpacity>
+              </View>
+              <ThemedView style={styles.textBox}>
+                <ScrollView style={styles.scrollView}>
+                  <ThemedText type="default">{data}</ThemedText>
+                </ScrollView>
+              </ThemedView>
+            </ThemedView>
+            <ThemedView style={styles.container}>
+              <View style={styles.headerWithButton}>
+                <ThemedText type="subtitle">Your Clipboard Entries</ThemedText>
+              </View>
+              <ClipboardScreen />
+            </ThemedView>
+          </>
         )}
-        contentContainerStyle={styles.listContent}
-      /> */}
-    </SafeAreaView >
+      </ThemedView>
+      {/* Overlay Circular Button */}
+      {/* <TouchableOpacity style={styles.overlayButton} >
+        <FontAwesome name="share" size={24} color="white" />
+      </TouchableOpacity> */}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff', // Set background color to white
+    backgroundColor: '#fff',
     padding: 16,
+    overflow: 'scroll'
+  },
+  centerContainer: {
+    alignSelf: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 16,
+    overflow: 'hidden'
   },
   container: {
-    alignItems: 'center',
-    flex: 1,
-    backgroundColor: '#fff', // Set background color to white
+    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
     overflow: 'hidden'
@@ -159,14 +158,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#fff',
   },
-  itemTitleHighlightedLight: {
-    fontSize: 18,
-    color: '#00796b', // Teal color for highlighted title
-  },
-  itemTitleHighlightedDark: {
-    fontSize: 18,
-    color: '#4db6ac', // Light teal color for highlighted title in dark mode
-  },
   itemExpiryLight: {
     fontSize: 14,
     color: '#666',
@@ -174,14 +165,6 @@ const styles = StyleSheet.create({
   itemExpiryDark: {
     fontSize: 14,
     color: '#aaa',
-  },
-  itemExpiryHighlightedLight: {
-    fontSize: 14,
-    color: '#004d40', // Dark teal color for highlighted expiry text
-  },
-  itemExpiryHighlightedDark: {
-    fontSize: 14,
-    color: '#00332c', // Darker teal color for highlighted expiry text in dark mode
   },
   itemContent: {
     flex: 1,
@@ -218,4 +201,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginLeft: 10,
   },
+  textBox: {
+    shadowColor: '#F0F1CF',
+    shadowOffset: { width: 4, height: 4 },
+    borderColor: '#000',
+    borderStyle: 'solid',
+    borderWidth: 1,
+    padding: 10,
+    marginTop: 10,
+    height: 200
+  },
+  headerWithButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 5,
+  },
+  copyButtonText: {
+    marginLeft: 5,
+    fontWeight: 'bold',
+  },
+  scrollView: {
+    flex: 1,
+  }
 });

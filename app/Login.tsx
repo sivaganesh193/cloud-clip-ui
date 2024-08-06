@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, TextInput, StyleSheet, useColorScheme, Alert, TouchableOpacity, Text, Dimensions, Modal, TouchableWithoutFeedback } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { auth } from '../firebaseConfig'; // Import Firebase auth
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import { AuthContext } from '@/auth/AuthContext';
 
 const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onClose: () => void; onSuccess: () => void; }) => {
   const [username, setUsername] = useState('');
@@ -42,6 +43,13 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
     setShowConfirmPassword(false);
     setIsForgotPasswordMode(false); // Reset forgot password mode
   };
+  const authContext = useContext(AuthContext);
+
+  if (!authContext) {
+    throw new Error("AuthContext must be used within an AuthProvider");
+  }
+
+  const { setUser } = authContext;
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -50,7 +58,10 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
     }
 
     try {
-      await signInWithEmailAndPassword(auth, username, password);
+      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      setUser(userCredential.user);
+      console.log(userCredential);
+      
       onSuccess();
       onClose();
       resetFields(); // Clear fields on successful login

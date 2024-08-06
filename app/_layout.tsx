@@ -1,11 +1,13 @@
+// _layout.tsx
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuthProvider, AuthContext } from '@/auth/AuthContext'; // Import AuthProvider and AuthContext
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -27,12 +29,14 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme} >
-      <Stack >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-        {/* <Stack.Screen name="Login" options={{ headerShown: false }} /> */}
-      </Stack>
-    </ThemeProvider>
+    <AuthProvider> {/* Wrap your entire layout with AuthProvider */}
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          {/* Add additional conditional logic for authenticated/unauthenticated screens if needed */}
+        </Stack>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
