@@ -29,12 +29,11 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider> {/* Wrap your entire layout with AuthProvider */}
+    <AuthProvider> 
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
-          {/* Add additional conditional logic for authenticated/unauthenticated screens if needed */}
         </Stack>
       </ThemeProvider>
     </AuthProvider>

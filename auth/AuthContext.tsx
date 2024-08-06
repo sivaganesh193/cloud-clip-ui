@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { View } from 'react-native';
 
 interface AuthContextProps {
     user: User | null;
@@ -34,7 +35,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ user, setUser, logout }}>
-            {!loading && children}
+            {/* <View> */}
+                {!loading && children}
+            {/* </View> */}
         </AuthContext.Provider>
     );
 };

@@ -30,7 +30,6 @@ export default function SharedLinks() {
       <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
         <ThemedText type="title" lightColor='black' darkColor='black'>Shared Links: </ThemedText>
         <Text>{'\n'}</Text>
-        {/* <ThemedText >{'\n'} </ThemedText> */}
         <FlatList
           data={sharedData}
           keyExtractor={(item) => item.id}

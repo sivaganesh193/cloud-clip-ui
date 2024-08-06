@@ -91,10 +91,6 @@ export default function Homepage() {
           </>
         )}
       </ThemedView>
-      {/* Overlay Circular Button */}
-      {/* <TouchableOpacity style={styles.overlayButton} >
-        <FontAwesome name="share" size={24} color="white" />
-      </TouchableOpacity> */}
     </SafeAreaView>
   );
 }

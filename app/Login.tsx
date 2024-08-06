@@ -129,12 +129,12 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
       animationType="fade"
       onRequestClose={() => {
         onClose();
-        resetFields(); // Clear fields when modal is closed
+        resetFields(); 
       }}
     >
       <TouchableWithoutFeedback onPress={() => {
         onClose();
-        resetFields(); // Clear fields when modal is closed
+        resetFields(); 
       }}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
