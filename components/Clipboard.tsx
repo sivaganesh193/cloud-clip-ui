@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Alert, Platform, Clipboard, LogBox } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,15 +20,19 @@ const ClipboardScreen = () => {
         "Eleventh copied item" // This will be trimmed to keep only the last 10 items
     ]);
 
-    // Limit to the last 10 entries
     const last10Entries = clipboardEntries.slice(-10);
 
-    // Function to handle copy action
     const handleCopy = (text: string | undefined) => {
-        // Implement the copy-to-clipboard logic here
-        // For demonstration purposes, we'll use an alert
-        Alert.alert('Copied to Clipboard', text);
+        if (Platform.OS === 'web') {
+            console.log("Running on Web");
+            window.alert(`Copied to Clipboard: ${text}`);
+        } else {
+            console.log("Running on Mobile");
+            Clipboard.setString(text || '');
+            Alert.alert('Copied to Clipboard', text);
+        }
     };
+
 
     return (
         <ThemedView style={styles.container}>
@@ -53,6 +57,7 @@ const ClipboardScreen = () => {
 
 const styles = StyleSheet.create({
     container: {
+        backgroundColor: '#fff',
         marginTop: 16,
         borderColor: 'black',
         borderWidth: 1,
@@ -77,6 +82,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 16,
         flex: 1,
+        color: '#000'
     },
     copyButton: {
         marginLeft: 10,

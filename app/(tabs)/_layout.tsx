@@ -3,7 +3,6 @@ import React from 'react';
 import { useColorScheme } from 'react-native';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { Colors } from '@/constants/Colors';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -12,7 +11,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: 'black',
+        tabBarActiveTintColor: isDarkMode ? '#fff' : '#121212',
         tabBarStyle: {
           backgroundColor: isDarkMode ? '#121212' : '#ffffff',
         },
@@ -30,7 +29,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="sharedLinks"
         options={{
-          title: 'Shared',
+          title: 'Quick Share',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'share-social' : 'share-social-outline'} color={color} />
           ),

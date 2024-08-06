@@ -2,11 +2,12 @@ import LoginPopup from '@/app/Login';
 import React, { useState, useContext } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
 import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
+import { useNavigation } from '@react-navigation/native';
 
 const Header = ({ navigation }: { navigation: any }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
- 
+
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
 
@@ -22,19 +23,21 @@ const Header = ({ navigation }: { navigation: any }) => {
     }
   };
 
+  const handlePress = () => {
+    navigation.navigate('Homepage'); // Replace 'Home' with your home route name
+  };
+
   return (
     <View style={styles.header}>
       <View style={styles.logoContainer}>
-        <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
+        <TouchableOpacity onPress={handlePress}>
+          <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Cloud-Clip</Text>
       </View>
-      {!user ? (
+      {!user && (
         <TouchableOpacity style={styles.loginButton} onPress={openModal}>
           <Text style={styles.loginButtonText}>Log In</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogout}>
-          <Text style={styles.loginButtonText}>Log Out</Text>
         </TouchableOpacity>
       )}
       <LoginPopup
@@ -57,6 +60,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    cursor: 'pointer'
   },
   logo: {
     width: 65,

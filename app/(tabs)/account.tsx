@@ -1,13 +1,15 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
+import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { AuthContext } from '@/auth/AuthContext';
 import { collection, doc, getDocs, query, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import Header from '@/components/Header';
+import { useNavigation } from '@react-navigation/native';
 
 interface Device {
   userId: string;
@@ -18,8 +20,11 @@ interface Device {
 export default function Account() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  const { user, logout } = useContext(AuthContext);
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState(user?.name || ''); // Initialize state with user data if available
+  const [mobile, setMobile] = useState(user?.mobile || '');
+  const email = user?.email || 'user@example.com'; // Use user's email if available
   const [userId, setUserId] = useState<string | null>(null);
 
   const [devices, setDevices] = useState<any[]>([]); // Define the type for the state
@@ -28,7 +33,7 @@ export default function Account() {
   if (!authContext) {
     throw new Error("AuthContext must be used within an AuthProvider");
   }
-  const { user } = authContext; // Use AuthContext to get the user
+  // const { user } = authContext; // Use AuthContext to get the user
 
   useEffect(() => {
     fetchUser();
@@ -36,13 +41,13 @@ export default function Account() {
 
   useFocusEffect(
     useCallback(() => {
-        console.log('Tab is focused');
-        fetchUser();
-        return () => {
-            console.log('Tab is unfocused');
-        };
+      console.log('Tab is focused');
+      fetchUser();
+      return () => {
+        console.log('Tab is unfocused');
+      };
     }, [])
-);
+  );
 
   const handleSave = () => {
     if (userId) {
@@ -81,7 +86,7 @@ export default function Account() {
         const querySnapshot = await getDocs(q);
         const devicesList: Device[] = querySnapshot.docs.map(doc => doc.data() as Device);
         setDevices(devicesList);
-        console.log('devices',devicesList);
+        console.log('devices', devicesList);
       } catch (error) {
         console.error('Error fetching devices: ', error);
       }
@@ -101,34 +106,77 @@ export default function Account() {
     }
   };
 
+  const handleLogout = () => {
+    logout(); // Call the logout function from useAuth
+  };
+
+  const navigation = useNavigation();
+
   return (
     <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
+      <Header navigation={navigation} />
       <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-        <ThemedText type="title">Account</ThemedText>
+        {user ? (
+          <View style={styles.content}>
+            <ThemedText type="title" style={styles.text}>Your Account</ThemedText>
+            <Text>{'\n'}</Text>
+            <View style={styles.fieldContainer}>
+              <ThemedText type="subtitle" style={styles.text}>Email</ThemedText>
+              <TextInput
+                style={isDarkMode ? styles.inputDark : styles.inputLight}
+                value={email}
+                editable={false}
+                placeholderTextColor={isDarkMode ? '#999' : '#999'}
+              />
+            </View>
 
-        <View style={styles.fieldContainer}>
-          <ThemedText type="subtitle">Email</ThemedText>
-          <Text style={isDarkMode ? styles.textDark : styles.textLight}>{user?.email}</Text>
-        </View>
+            <View style={styles.fieldContainer}>
+              <ThemedText type="subtitle" style={styles.text}>Name</ThemedText>
+              <TextInput
+                style={isDarkMode ? styles.inputDark : styles.inputLight}
+                onChangeText={setName}
+                value={name}
+                placeholder="Enter your name"
+                placeholderTextColor={'slategrey'}
+              />
+            </View>
 
-        <View style={styles.fieldContainer}>
-          <ThemedText type="subtitle">Name</ThemedText>
-          <TextInput
-            style={isDarkMode ? styles.inputDark : styles.inputLight}
-            onChangeText={setName}
-            value={name}
-            placeholder="Enter your name"
-            placeholderTextColor={isDarkMode ? '#ccc' : '#999'}
-          />
-        </View>
+            <View style={styles.fieldContainer}>
+              <ThemedText type="subtitle" style={styles.text}>Mobile</ThemedText>
+              <TextInput
+                style={isDarkMode ? styles.inputDark : styles.inputLight}
+                onChangeText={setMobile}
+                value={mobile}
+                placeholder="Enter your mobile number"
+                placeholderTextColor={'slategrey'}
+                keyboardType="phone-pad"
+              />
+            </View>
 
-        <TouchableOpacity
-          style={isDarkMode ? styles.buttonDark : styles.buttonLight}
-          onPress={handleSave}
-        >
-          <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Save</Text>
-        </TouchableOpacity>
-      </ThemedView>
+            <TouchableOpacity
+              style={isDarkMode ? styles.buttonDark : styles.buttonLight}
+              onPress={handleSave}
+            >
+              <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Save</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutButtonText}>Click here to logout!</Text>
+            </TouchableOpacity>
+
+          </View>
+        ) : (
+          <ThemedView style={styles.containerCenter}>
+            <MaterialCommunityIcons name="hand-wave" size={24} color="black"/>
+            <ThemedText type="subtitle" style={styles.textLight}>Hi there! {'\n'}</ThemedText>
+            <ThemedText type="subtitle" style={styles.textLight}>Welcome! Please log in to access your account and enjoy personalized features.
+            </ThemedText>
+          </ThemedView>
+        )}
+      </ThemedView >
       <ThemedText type="subtitle">My Devices</ThemedText>
       <FlatList
           data={devices}
@@ -149,32 +197,35 @@ export default function Account() {
           )}
           contentContainerStyle={styles.listContent}
         />
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 
 const styles = StyleSheet.create({
   safeAreaLight: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fff',
     padding: 16,
   },
   safeAreaDark: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#fff',
     padding: 16,
+  },
+  text: {
+    color: '#000',
   },
   containerLight: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
   },
   containerDark: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 16,
+    // borderRadius: 16,
   },
   fieldContainer: {
     marginBottom: 16,
@@ -185,38 +236,38 @@ const styles = StyleSheet.create({
   },
   textDark: {
     fontSize: 16,
-    color: '#fff',
+    color: '#000',
   },
   inputLight: {
     height: 40,
-    borderColor: '#ccc',
+    borderColor: '#000',
     borderWidth: 1,
-    borderRadius: 8,
+    marginTop: 2,
     paddingHorizontal: 8,
     backgroundColor: '#fff',
     color: '#000',
   },
   inputDark: {
     height: 40,
-    borderColor: '#333',
+    borderColor: '#000',
     borderWidth: 1,
-    borderRadius: 8,
+    marginTop: 2,
     paddingHorizontal: 8,
-    backgroundColor: '#1e1e1e',
-    color: '#fff',
+    backgroundColor: '#fff',
+    color: '#000',
   },
   buttonLight: {
     marginTop: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#007bff',
+    backgroundColor: '#000',
     alignItems: 'center',
   },
   buttonDark: {
     marginTop: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#1e90ff',
+    backgroundColor: '#000',
     alignItems: 'center',
   },
   buttonTextLight: {
@@ -274,4 +325,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#aaa',
   },
+  containerCenter: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    flex: 1,
+    width: Platform.OS === 'web' ? '50%' : '100%', // Center content on web, full width on mobile
+    alignSelf: Platform.OS === 'web' ? 'center' : 'stretch', // Center align on web
+  },
+  logoutButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+    alignItems: 'center'
+  },
+  logoutButtonText: {
+    fontWeight: 'bold',
+    cursor: 'pointer'
+  }
 });

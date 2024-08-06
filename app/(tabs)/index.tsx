@@ -76,8 +76,9 @@ export default function Homepage() {
         ) : (
           <>
             <ThemedView style={styles.container}>
+            <ThemedText style={styles.title} type="title">Welcome User!</ThemedText>
               <View style={styles.headerWithButton}>
-                <ThemedText type="subtitle">Your latest copied text</ThemedText>
+                <ThemedText style={styles.title} type="subtitle">Your latest copied text</ThemedText>
                 <TouchableOpacity style={styles.copyButton} onPress={() => handleCopy(data)}>
                   <Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
                   <Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
@@ -85,13 +86,13 @@ export default function Homepage() {
               </View>
               <ThemedView style={styles.textBox}>
                 <ScrollView style={styles.scrollView}>
-                  <ThemedText type="default">{data}</ThemedText>
+                  <ThemedText style={styles.title} type="default">{data}</ThemedText>
                 </ScrollView>
               </ThemedView>
             </ThemedView>
             <ThemedView style={styles.container}>
               <View style={styles.headerWithButton}>
-                <ThemedText type="subtitle">Your Clipboard Entries</ThemedText>
+                <ThemedText style={styles.title} type="subtitle">Your Clipboard Entries</ThemedText>
               </View>
               <ClipboardScreen />
             </ThemedView>
@@ -205,6 +206,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   textBox: {
+    backgroundColor: '#fff',
     shadowColor: '#F0F1CF',
     shadowOffset: { width: 4, height: 4 },
     borderColor: '#000',
@@ -227,10 +229,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   copyButtonText: {
-    marginLeft: 5,
+    // marginLeft: 5,
     fontWeight: 'bold',
   },
   scrollView: {
     flex: 1,
+  },
+  title: {
+    color: '#000'
   }
 });
