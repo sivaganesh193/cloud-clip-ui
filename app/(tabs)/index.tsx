@@ -1,60 +1,67 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, FlatList, Clipboard, ScrollView } from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Clipboard, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from '../../firebaseConfig';
 import Header from '../../components/Header';
 import Description from '@/components/Description';
 import { useNavigation } from 'expo-router';
 import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 
 export default function Homepage() {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
-  const [device, setDevice] = useState("ASUS Rog");
   const [data, setData] = useState("In the realm of operating systems, Windows has long been a dominant player, offering a broad range of functionalities and user-friendly features that cater to a diverse audience. With its rich graphical user interface, extensive support for software applications, and robust security features, Windows provides a versatile environment for both personal and professional use. Over the years, it has evolved through numerous versions, each bringing enhancements in performance, usability, and integration with modern technologies. From its early days to the latest updates, Windows has consistently strived to balance innovation with stability, making it a preferred choice for many users around the world. Whether it’s for gaming, productivity, or everyday tasks, the adaptability and wide compatibility of Windows continue to solidify its position as a leading operating system in the industry.");
-
   const [dbData, setDbData] = useState<any[]>([]); // Define the type for the state
-
-  const { user } = useContext(AuthContext); // Use AuthContext to get the user
+  
+  const authContext = useContext(AuthContext); // Get AuthContext
+  if (!authContext) {
+    // Handle the case where AuthContext is undefined
+    throw new Error("AuthContext must be used within an AuthProvider");
+  }
+  const { user } = authContext; // Use AuthContext to get the user
   const navigation = useNavigation();
-
-  const handleShare = (device: string, text: string) => {
-    setData(text);
-    setDevice(device);
-  };
 
   const handleCopy = (text: string) => {
     Clipboard.setString(text);
   };
 
-  const generateRandomKey = () => Math.random().toString(36).substr(2, 9);
+  const [deviceInfo, setDeviceInfo] = useState({
+    systemName: '',
+    systemVersion: '',
+    model: '',
+    brand: '',
+    uniqueId: '',
+    deviceName: '',
+});
 
   useEffect(() => {
+    console.log('initial load');
     const fetchData = async () => {
+    console.log(Device);
+    console.log(Constants);
+    
       if (user) {
         try {
-          const arrayData: any[] = [];
-          const querySnapshot = await getDocs(collection(db, "devices"));
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("email", "==", user.email));
+          const querySnapshot = await getDocs(q);
           querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.userId === user.uid) { // Use user.uid for comparison
-              arrayData.push({
-                device: data.name,
-                copiedText: data.latestText,
-                id: generateRandomKey()
-              });
-            }
+              console.log(`${doc.id} => `, doc.data());
           });
-          setDbData(arrayData);
         } catch (error) {
           console.error("Error fetching data: ", error);
         }
+      }
+      else {
+        console.log('not logged in');
       }
     };
     fetchData();

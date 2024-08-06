@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, TextInput, StyleSheet, useColorScheme, Alert, TouchableOpacity, Text, Dimensions, Modal, TouchableWithoutFeedback } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
-import { auth } from '../firebaseConfig'; // Import Firebase auth
+import { auth, db } from '../firebaseConfig'; // Import Firebase auth
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { AuthContext } from '@/auth/AuthContext';
+import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
 
 const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onClose: () => void; onSuccess: () => void; }) => {
   const [username, setUsername] = useState('');
@@ -61,7 +62,6 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
       setUser(userCredential.user);
       console.log(userCredential);
-      
       onSuccess();
       onClose();
       resetFields(); // Clear fields on successful login
@@ -73,6 +73,22 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
         message = "Incorrect password.";
       }
       Alert.alert("Login Error", message);
+    }
+  };
+
+  const createUser = async (email: string, name: string) => {
+    try {
+      const userRef = doc(collection(db, 'users'));
+      const user = {
+        email: email,
+        name: name,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+      await setDoc(userRef, user);
+      console.log('User added with ID: ', userRef.id);
+    } catch (error) {
+      console.error('Error adding user: ', error);
     }
   };
 
@@ -89,6 +105,7 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
 
     try {
       await createUserWithEmailAndPassword(auth, username, password);
+      createUser(username,name);
       onSuccess();
       onClose();
       resetFields(); // Clear fields on successful sign-up
@@ -129,12 +146,12 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
       animationType="fade"
       onRequestClose={() => {
         onClose();
-        resetFields(); 
+        resetFields();
       }}
     >
       <TouchableWithoutFeedback onPress={() => {
         onClose();
-        resetFields(); 
+        resetFields();
       }}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
