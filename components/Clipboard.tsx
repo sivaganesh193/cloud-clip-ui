@@ -40,6 +40,7 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries }) =
 
 const styles = StyleSheet.create({
     container: {
+        backgroundColor: '#fff',
         marginTop: 16,
         borderColor: 'black',
         borderWidth: 1,
@@ -64,6 +65,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 16,
         flex: 1,
+        color: '#000'
     },
     copyButton: {
         marginLeft: 10,

@@ -33,9 +33,7 @@ const Header = ({ navigation }: { navigation: any }) => {
           <Text style={styles.loginButtonText}>Log In</Text>
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogout}>
-          <Text style={styles.loginButtonText}>Log Out</Text>
-        </TouchableOpacity>
+        <></>
       )}
       <LoginPopup
         isVisible={isModalVisible}

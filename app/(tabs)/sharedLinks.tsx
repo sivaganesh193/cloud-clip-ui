@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useContext } from 'react';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
 import { useNavigation } from 'expo-router';
 import { createClipboardEntry } from '@/service/firebaseService';
+import { AuthContext } from '@/auth/AuthContext';
 
 const sharedData = [
 	{ id: '1', title: 'Shared Link 1', expiresIn: '2 hours' },
@@ -34,19 +35,19 @@ export default function SharedLinks() {
 				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 1' },
 				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 2' },
 				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 3' },
-	
+
 				// Entries with userId 'k7vz5bk1K1cnusnUugBtEUreb2q2' and different deviceId
 				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device4', content: 'Clipboard content 4' },
 				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device5', content: 'Clipboard content 5' },
 				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device6', content: 'Clipboard content 6' },
-	
+
 				// Entries with different userId
 				{ userId: 'user8', deviceId: 'device8', content: 'Clipboard content 7' },
 				{ userId: 'user9', deviceId: 'device9', content: 'Clipboard content 8' },
 				{ userId: 'user10', deviceId: 'device10', content: 'Clipboard content 9' },
 				{ userId: 'user11', deviceId: 'device11', content: 'Clipboard content 10' },
 			];
-	
+
 			for (const entry of entries) {
 				const id = await createClipboardEntry(entry);
 				console.log(`Created clipboard entry with ID: ${id}`);
@@ -55,36 +56,61 @@ export default function SharedLinks() {
 			console.error('Error creating multiple clipboard entries: ', error);
 		}
 	};
-	
+
 
 	const handleShare = (title: string) => {
 		console.log(`Share link: ${title}`);
 		createMultipleClipboardEntries();
 	};
 
+	const { user } = useContext(AuthContext);
+
 	return (
 		<SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
 			<Header navigation={navigation} />
-			<ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-				<ThemedText type="title" lightColor='black' darkColor='black'>Shared Links: </ThemedText>
-				<Text>{'\n'}</Text>
-				<FlatList
-					data={sharedData}
-					keyExtractor={(item) => item.id}
-					renderItem={({ item }) => (
-						<View style={isDarkMode ? styles.itemContainerLight : styles.itemContainerLight}>
-							<View>
-								<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.title}</Text>
-								<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.expiresIn}</Text>
-							</View>
-							<TouchableOpacity onPress={() => handleShare(item.title)}>
-								<Ionicons name="share-outline" size={24} color={'black'} />
-							</TouchableOpacity>
-						</View>
-					)}
-					contentContainerStyle={styles.listContent}
+			<ThemedView style={styles.containerDark}>
+				<ThemedText type="title" style={styles.heading}>
+					Paste your text here and click on Share to easily share text with friends!
+				</ThemedText>
+
+				<TextInput
+					style={isDarkMode ? styles.inputDark : styles.inputLight}
+					placeholder="Enter text to share"
+					placeholderTextColor={isDarkMode ? '#999' : '#999'}
+					value={"Hi hello world~!"}
 				/>
+
+				<TouchableOpacity
+					style={styles.shareButton}
+				>
+					<Ionicons name="share-outline" size={24} color="white" />
+					<ThemedText type="default" style={styles.shareButtonText}>
+						Share
+					</ThemedText>
+				</TouchableOpacity>
 			</ThemedView>
+			{user && (
+				<ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
+					<ThemedText type="subtitle" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
+					<Text>{'\n'}</Text>
+					<FlatList
+						data={sharedData}
+						keyExtractor={(item) => item.id}
+						renderItem={({ item }) => (
+							<View style={isDarkMode ? styles.itemContainerLight : styles.itemContainerLight}>
+								<View>
+									<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.title}</Text>
+									<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.expiresIn}</Text>
+								</View>
+								<TouchableOpacity onPress={() => handleShare(item.title)}>
+									<Ionicons name="share-outline" size={24} color={'black'} />
+								</TouchableOpacity>
+							</View>
+						)}
+						contentContainerStyle={styles.listContent}
+					/>
+				</ThemedView>
+			)}
 		</SafeAreaView>
 	);
 }
@@ -101,13 +127,13 @@ const styles = StyleSheet.create({
 		padding: 16,
 	},
 	containerLight: {
-		flex: 1,
+		// flex: 1,
 		backgroundColor: '#fff',
 		padding: 16,
 		// borderRadius: 16,
 	},
 	containerDark: {
-		flex: 1,
+		// flex: 1,
 		backgroundColor: '#fff',
 		padding: 16,
 		// borderRadius: 16,
@@ -158,5 +184,46 @@ const styles = StyleSheet.create({
 	itemExpiryDark: {
 		fontSize: 14,
 		color: '#aaa',
+	},
+	heading: {
+		marginBottom: 16,
+		fontSize: 18,
+		color: '#000',
+		textAlign: 'center',
+	},
+	inputLight: {
+		height: 40,
+		borderColor: '#000',
+		borderWidth: 1,
+		borderRadius: 8,
+		paddingHorizontal: 8,
+		backgroundColor: '#fff',
+		color: '#000',
+		marginBottom: 16,
+	},
+	inputDark: {
+		height: 40,
+		borderColor: '#000',
+		borderWidth: 1,
+		borderRadius: 8,
+		paddingHorizontal: 8,
+		color: '#fff',
+		marginBottom: 16,
+	},
+	shareButton: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingVertical: 5,
+		width: 200,
+		alignSelf: 'center',
+		borderRadius: 8,
+		backgroundColor: 'black',
+	},
+	shareButtonText: {
+		color: '#fff',
+		fontSize: 16,
+		// fontWeight: 'bold',
+		marginLeft: 8,
 	},
 });
