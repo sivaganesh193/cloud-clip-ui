@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Alert, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,6 +8,9 @@ import Header from '@/components/Header';
 import { useNavigation } from 'expo-router';
 import { createClipboardEntry } from '@/service/firebaseService';
 import { AuthContext } from '@/auth/AuthContext';
+import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { db } from '@/firebaseConfig';
+import CustomModal from '@/components/CustomModal'; // Import the custom modal
 
 const sharedData = [
 	{ id: '1', title: 'Shared Link 1', expiresIn: '2 hours' },
@@ -21,6 +24,9 @@ export default function SharedLinks() {
 	const colorScheme = useColorScheme();
 	const isDarkMode = colorScheme === 'dark';
 	const navigation = useNavigation();
+	const [modalVisible, setModalVisible] = useState(false);
+	const [linkCode, setLinkCode] = useState('');
+	const [sharedLinkURL, setSharedLinkURL] = useState('');
 
 	interface Device {
 		userId: string;
@@ -57,10 +63,35 @@ export default function SharedLinks() {
 		}
 	};
 
+	const handleShare = async (content: string) => {
+		try {
+			// Calculate expiration time (24 hours from now)
+			const expiresIn = Timestamp.now().toMillis() + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-	const handleShare = (title: string) => {
-		console.log(`Share link: ${title}`);
-		createMultipleClipboardEntries();
+			// Create a shared link object
+			const sharedLink = {
+				content,
+				createdAt: Timestamp.now(),
+				expiresAt: new Timestamp(expiresIn / 1000, 0), // Firestore Timestamp requires seconds and nanoseconds
+				...(user ? { createdBy: user.uid } : {}),
+			};
+
+			// Add a document with a unique ID to the 'sharedLinks' collection
+			const docRef = await addDoc(collection(db, 'sharedLinks'), sharedLink);
+			const linkCode = docRef.id;
+
+			// Define the link
+			const sharedLinkURL = `https://yourapp.com/shared/${linkCode}`;
+
+			// Show the custom modal
+			setLinkCode(linkCode);
+			setSharedLinkURL(sharedLinkURL);
+			setModalVisible(true);
+
+			console.log(`Shared link created with ID: ${linkCode}`);
+		} catch (error) {
+			console.error('Error creating shared link: ', error);
+		}
 	};
 
 	const { user } = useContext(AuthContext);
@@ -82,6 +113,7 @@ export default function SharedLinks() {
 
 				<TouchableOpacity
 					style={styles.shareButton}
+					onPress={() => handleShare("HIIIII")}
 				>
 					<Ionicons name="share-outline" size={24} color="white" />
 					<ThemedText type="default" style={styles.shareButtonText}>
@@ -102,7 +134,7 @@ export default function SharedLinks() {
 									<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.title}</Text>
 									<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.expiresIn}</Text>
 								</View>
-								<TouchableOpacity onPress={() => handleShare(item.title)}>
+								<TouchableOpacity>
 									<Ionicons name="share-outline" size={24} color={'black'} />
 								</TouchableOpacity>
 							</View>
@@ -111,6 +143,13 @@ export default function SharedLinks() {
 					/>
 				</ThemedView>
 			)}
+
+			<CustomModal
+				visible={modalVisible}
+				onClose={() => setModalVisible(false)}
+				linkCode={linkCode}
+				sharedLinkURL={sharedLinkURL}
+			/>
 		</SafeAreaView>
 	);
 }
@@ -127,16 +166,12 @@ const styles = StyleSheet.create({
 		padding: 16,
 	},
 	containerLight: {
-		// flex: 1,
 		backgroundColor: '#fff',
 		padding: 16,
-		// borderRadius: 16,
 	},
 	containerDark: {
-		// flex: 1,
 		backgroundColor: '#fff',
 		padding: 16,
-		// borderRadius: 16,
 	},
 	listContent: {
 		paddingBottom: 16,
@@ -223,7 +258,6 @@ const styles = StyleSheet.create({
 	shareButtonText: {
 		color: '#fff',
 		fontSize: 16,
-		// fontWeight: 'bold',
 		marginLeft: 8,
 	},
 });
