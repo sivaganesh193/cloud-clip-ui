@@ -18,7 +18,7 @@ export default function Homepage() {
 	const isDarkMode = colorScheme === 'dark';
 
 	const [data, setData] = useState("In the realm of operating systems, Windows has long been a dominant player, offering a broad range of functionalities and user-friendly features that cater to a diverse audience. With its rich graphical user interface, extensive support for software applications, and robust security features, Windows provides a versatile environment for both personal and professional use. Over the years, it has evolved through numerous versions, each bringing enhancements in performance, usability, and integration with modern technologies. From its early days to the latest updates, Windows has consistently strived to balance innovation with stability, making it a preferred choice for many users around the world. Whether it’s for gaming, productivity, or everyday tasks, the adaptability and wide compatibility of Windows continue to solidify its position as a leading operating system in the industry.");
-    const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
+	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 
 	const authContext = useContext(AuthContext); // Get AuthContext
 	if (!authContext) {
@@ -44,15 +44,15 @@ export default function Homepage() {
 	}, [user]); // Re-fetch data when user changes
 
 	// useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         checkClipboardChanges((newContent) => {
-    //             console.log('New clipboard content:', newContent);
-    //             // Handle the new clipboard content (e.g., update state, send to server)
-    //         });
-    //     }, 1000); // Check every 1 second, adjust as needed
+	//     const interval = setInterval(() => {
+	//         checkClipboardChanges((newContent) => {
+	//             console.log('New clipboard content:', newContent);
+	//             // Handle the new clipboard content (e.g., update state, send to server)
+	//         });
+	//     }, 1000); // Check every 1 second, adjust as needed
 
-    //     return () => clearInterval(interval); // Clean up the interval on component unmount
-    // }, []);
+	//     return () => clearInterval(interval); // Clean up the interval on component unmount
+	// }, []);
 
 	// useEffect(() => {
 	// 	const subscription = addClipboardListener(() => {
@@ -61,7 +61,7 @@ export default function Homepage() {
 	// 	  });
 	//   });
 	// //   removeClipboardListener(subscription);
-    // }, []);
+	// }, []);
 
 
 	return (
@@ -74,7 +74,7 @@ export default function Homepage() {
 					<>
 						<ThemedView style={styles.container}>
 							<View style={styles.headerWithButton}>
-								<ThemedText type="subtitle">Your latest copied text</ThemedText>
+								<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
 								<TouchableOpacity style={styles.copyButton} onPress={() => handleCopy(data)}>
 									<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
 									<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
@@ -82,15 +82,15 @@ export default function Homepage() {
 							</View>
 							<ThemedView style={styles.textBox}>
 								<ScrollView style={styles.scrollView}>
-									<ThemedText type="default">{data}</ThemedText>
+									<ThemedText type="default" style={styles.text}>{data}</ThemedText>
 								</ScrollView>
 							</ThemedView>
 						</ThemedView>
 						<ThemedView style={styles.container}>
 							<View style={styles.headerWithButton}>
-								<ThemedText type="subtitle">Your Clipboard Entries</ThemedText>
+								<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries</ThemedText>
 							</View>
-							<ClipboardScreen clipboardEntries={clipboardEntries}/>
+							<ClipboardScreen clipboardEntries={clipboardEntries} />
 						</ThemedView>
 					</>
 				)}
@@ -105,6 +105,9 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		padding: 16,
 		overflow: 'scroll'
+	},
+	text: {
+		color: '#000'
 	},
 	centerContainer: {
 		alignSelf: 'center',
@@ -209,7 +212,8 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		padding: 10,
 		marginTop: 10,
-		height: 200
+		height: 200,
+		backgroundColor: '#fff'
 	},
 	headerWithButton: {
 		flexDirection: 'row',

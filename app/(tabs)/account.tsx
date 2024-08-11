@@ -162,7 +162,7 @@ export default function Account() {
                         </TouchableOpacity>
                         <Text>{'\n'}</Text>
                         <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-                            <ThemedText type="subtitle">My Devices</ThemedText>
+                            <ThemedText type="subtitle" style={styles.text}>My Devices</ThemedText>
                             <FlatList
                                 data={devices}
                                 keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
