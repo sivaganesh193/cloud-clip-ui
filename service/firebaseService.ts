@@ -80,7 +80,7 @@ export const fetchDevices = async (userId: string): Promise<Device[]> => {
         const querySnapshot = await getDocs(q);
         const devicesList: Device[] = querySnapshot.docs.map(doc => ({
             ...doc.data() as Device, // Spread the existing device data
-            deviceId: doc.id // Add the doc ID as deviceId
+            id: doc.id // Add the doc ID as deviceId
         }));
         console.log('Devices:', devicesList);
         return devicesList;

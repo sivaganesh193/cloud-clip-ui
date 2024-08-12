@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform } from 'react-native';
+import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform, Modal, Button, Pressable } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,8 +7,8 @@ import { AuthContext } from '@/auth/AuthContext';
 import { doc, Timestamp, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { deleteDevice, fetchDevices, fetchUser } from '@/service/firebaseService';
-import { getDeviceId } from '@/service/deviceService';
+import { createDevice, deleteDevice, fetchDevices, fetchUser } from '@/service/firebaseService';
+import { getDeviceId, getDeviceOS, setDeviceId } from '@/service/deviceService';
 import { Device } from '@/service/models';
 import * as Crypto from 'expo-crypto';
 import Header from '@/components/Header';
@@ -19,61 +19,91 @@ export default function Account() {
     const isDarkMode = colorScheme === 'dark';
 
     const [name, setName] = useState('');
-    const [currentDevice, setCurrentDevice] = useState<string | null>(null);
+    const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
     const [devices, setDevices] = useState<any[]>([]);
-
+    const [modalVisible, setModalVisible] = useState(false);
+    const [deviceName, setDeviceName] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [highlightIndex, setHighlightIndex] = useState(-1);
 
     const authContext = useContext(AuthContext); // Get AuthContext
     if (!authContext) {
         throw new Error("AuthContext must be used within an AuthProvider");
     }
     const { user, logout } = authContext; // Use AuthContext to get the user
+    const email = user?.email || 'user@example.com';
 
     useEffect(() => {
-        getDeviceId().then((deviceId) => setCurrentDevice(deviceId));
-        if (user) {
-            fetchUser(user.uid)
-                .then((userData) => {
+        const fetchData = async () => {
+            if (user && currentDeviceId) {
+                const devices = await fetchDevices(user.uid);
+                setDevices(devices);
+                const matchingIndex = currentDeviceId ? devices.findIndex(device => device.deviceId?.includes(currentDeviceId)) : -1;
+                console.log(matchingIndex, currentDeviceId);
+                setHighlightIndex(matchingIndex);
+            }
+        };
+
+        const initialize = async () => {
+            try {
+                // Fetch device ID and user details concurrently
+                const deviceId = await getDeviceId();
+                setCurrentDeviceId(deviceId);
+
+                if (user) {
+                    const userData = await fetchUser(user.uid);
                     if (userData) {
                         setName(userData.name);
                     } else {
                         console.log('User not found');
                     }
-                })
-                .catch((error) => {
-                    console.error('Error fetching user: ', error);
-                });
-        }
-    }, [user]);
+                }
 
-    // const [mobile, setMobile] = useState(user?.mobile || '');
-    const email = user?.email || 'user@example.com';
+                if (deviceId) {
+                    fetchData();
+                }
 
-    const fetchData = async () => {
-        if (user) {
-            fetchDevices(user.uid)
-                .then((devices) => {
-                    setDevices(devices);
-                })
-                .catch((error) => {
-                    console.error('Error fetching devices: ', error);
-                });
-        }
-    };
+                // Start the interval only after the currentDeviceId is set
+                const intervalId = setInterval(() => {
+                    fetchData();
+                }, 5000);
 
-    useEffect(() => {
-        fetchData();
-        const intervalId = setInterval(() => {
-            fetchData();
-        }, 5000);
-        return () => {
-            clearInterval(intervalId);
+                // Cleanup the interval on unmount
+                return () => clearInterval(intervalId);
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
         };
-    }, []);
+
+        initialize();
+    }, [user, currentDeviceId]);
 
     const handleSave = () => {
         if (user) {
             updateUser(user.uid, name);
+        }
+    };
+
+    const handleOpen = () => {
+        setModalVisible(true);
+    };
+
+    const handleAddDevice = () => {
+        if (deviceName.length < 5) {
+            setErrorMessage('Device name must be at least 5 characters long.');
+            return;
+        }
+        const deviceId = currentDeviceId + '_*_' + deviceName;
+        const deviceOS = getDeviceOS();
+        console.log('Device Id stored: ', deviceId);
+        console.log('Device OS: ', deviceOS);
+        if (user) {
+            createDevice({ deviceName: deviceName, deviceId: deviceId, os: deviceOS, userId: user.uid }).then(() => {
+                // fetchData();
+                setModalVisible(false);
+                setDeviceName(''); // Reset the input field
+                setErrorMessage(''); // Reset the error message
+            })
         }
     };
 
@@ -83,7 +113,7 @@ export default function Account() {
 
     const handleRemove = (id: string) => {
         deleteDevice(id);
-        fetchData();
+        // fetchData();
     };
 
     const handleLogout = () => {
@@ -104,30 +134,67 @@ export default function Account() {
         }
     };
 
-    const renderItem = ({ item }: { item: Device }) => {
-        const isHighlighted = item.deviceId === currentDevice;
-        console.log(currentDevice, isHighlighted);
+    // const renderItem = ({ item }: { item: Device }) => {
+    //     return (
+    //         <View style={[true && styles.itemHighlighted, isDarkMode ? styles.itemContainerLight : styles.itemContainerLight]}>
+    //             <View>
+    //                 <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.deviceName}</Text>
+    //                 <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Type: {item.os}</Text>
+    //             </View>
+    //             <TouchableOpacity onPress={() => handleSync(item.id || '')}>
+    //                 <Ionicons name="sync-outline" size={24} color={'black'} />
+    //             </TouchableOpacity>
+    //             <TouchableOpacity onPress={() => handleRemove(item.id || '')}>
+    //                 <Ionicons name="trash-outline" size={24} color={'black'} />
+    //             </TouchableOpacity>
+    //         </View>
+    //     );
+    // };
+
+    const renderItem = ({ item, index }: { item: Device, index: number }) => {
         return (
-            <View style={[isHighlighted && styles.itemHighlighted, isDarkMode ? styles.itemContainerLight : styles.itemContainerLight]}>
+            <View style={[isDarkMode ? styles.itemContainerLight : styles.itemContainerLight]}>
                 <View>
                     <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.deviceName}</Text>
-                    <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.os}</Text>
+                    <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Type: {item.os}</Text>
                 </View>
                 <TouchableOpacity onPress={() => handleSync(item.deviceId || '')}>
                     <Ionicons name="sync-outline" size={24} color={'black'} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleRemove(item.deviceId || '')}>
+                <TouchableOpacity onPress={() => handleRemove(item.id || '')}>
                     <Ionicons name="trash-outline" size={24} color={'black'} />
                 </TouchableOpacity>
             </View>
         );
     };
 
-    const isButtonDisabled = currentDevice ? devices.some(device => device.deviceId === currentDevice) : false;
     const navigation = useNavigation();
     return (
-
         <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
+            {/* <Modal
+                animationType="fade"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>Device Name: </Text>
+                        <TextInput
+                            style={styles.input}
+                            value={deviceName}
+                            onChangeText={setDeviceName}
+                        />
+                        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                        <TouchableOpacity
+                            style={isDarkMode ? styles.buttonDark : styles.buttonLight}
+                            onPress={handleAddDevice}
+                        >
+                            <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Add Device</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal> */}
             <Header navigation={navigation} />
             <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                 {user ? (
@@ -172,10 +239,10 @@ export default function Account() {
                             <TouchableOpacity
                                 style={[
                                     styles.addDeviceButton,
-                                    isButtonDisabled && styles.buttonDisabled // Apply disabled style if the button is disabled
+                                    (highlightIndex !== -1) && styles.buttonDisabled // Apply disabled style if the button is disabled
                                 ]}
-                                onPress={handleSave}
-                                disabled={isButtonDisabled} // Disable the button if needed
+                                onPress={handleOpen}
+                                disabled={(highlightIndex !== -1)} // Disable the button if needed
                             >
                                 <Text style={styles.addDeviceButtonText}>
                                     Add Current Device
@@ -218,16 +285,11 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     containerLight: {
-        // flex: 1,
         backgroundColor: '#fff',
-        // padding: 16,
         borderRadius: 16,
     },
     containerDark: {
-        // flex: 1,
         backgroundColor: '#fff',
-        // padding: 16,
-        // borderRadius: 16,
     },
     fieldContainer: {
         marginBottom: 16,
@@ -380,5 +442,39 @@ const styles = StyleSheet.create({
     addDeviceButtonText: {
         color: 'black',
         fontWeight: 'bold'
-    }
+    },
+    // modalContainer: {
+    //     flex: 1,
+    //     justifyContent: 'center',
+    //     alignItems: 'center',
+    //     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    // },
+    // modalView: {
+    //     width: 300,
+    //     backgroundColor: 'white',
+    //     borderRadius: 10,
+    //     padding: 20,
+    //     alignItems: 'center',
+    //     shadowColor: '#000',
+    //     shadowOffset: { width: 0, height: 2 },
+    //     shadowOpacity: 0.25,
+    //     shadowRadius: 4,
+    //     elevation: 5,
+    // },
+    // modalText: {
+    //     fontSize: 18,
+    //     marginBottom: 15,
+    // },
+    // input: {
+    //     height: 40,
+    //     width: '100%',
+    //     borderColor: '#ccc',
+    //     borderWidth: 1,
+    //     marginBottom: 20,
+    //     paddingHorizontal: 10,
+    // },
+    // errorText: {
+    //     color: 'red',
+    //     marginBottom: 10,
+    // },
 });
