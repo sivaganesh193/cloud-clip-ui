@@ -20,8 +20,7 @@ export default function Account() {
 
     const [name, setName] = useState('');
     const [currentDevice, setCurrentDevice] = useState<string | null>(null);
-    const [devices, setDevices] = useState<any[]>([]);
-
+    const [devices, setDevices] = useState<any[]>([]); // Define the type for the state
 
     const authContext = useContext(AuthContext); // Get AuthContext
     if (!authContext) {
@@ -46,7 +45,6 @@ export default function Account() {
         }
     }, [user]);
 
-    // const [mobile, setMobile] = useState(user?.mobile || '');
     const email = user?.email || 'user@example.com';
 
     const fetchData = async () => {
@@ -90,7 +88,6 @@ export default function Account() {
         logout(); // Call the logout function from useAuth
     };
 
-
     const updateUser = async (id: string, name: string) => {
         try {
             const userDocRef = doc(db, 'users', id);
@@ -126,7 +123,6 @@ export default function Account() {
     const isButtonDisabled = currentDevice ? devices.some(device => device.deviceId === currentDevice) : false;
     const navigation = useNavigation();
     return (
-
         <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
             <Header navigation={navigation} />
             <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
@@ -143,7 +139,6 @@ export default function Account() {
                                 placeholderTextColor={isDarkMode ? '#999' : '#999'}
                             />
                         </View>
-
                         <View style={styles.fieldContainer}>
                             <ThemedText type="subtitle" style={styles.text}>Name</ThemedText>
                             <TextInput
@@ -220,14 +215,11 @@ const styles = StyleSheet.create({
     containerLight: {
         flex: 1,
         backgroundColor: '#fff',
-        // padding: 16,
         borderRadius: 16,
     },
     containerDark: {
         flex: 1,
         backgroundColor: '#fff',
-        // padding: 16,
-        // borderRadius: 16,
     },
     fieldContainer: {
         marginBottom: 16,
@@ -347,7 +339,7 @@ const styles = StyleSheet.create({
     },
     logoutButtonText: {
         fontWeight: 'bold',
-        cursor: 'pointer',
+        // cursor: 'pointer',
         textDecorationColor: 'black',
         textDecorationStyle: 'solid',
         textDecorationLine: 'underline'
