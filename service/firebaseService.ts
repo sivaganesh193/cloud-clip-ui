@@ -80,7 +80,7 @@ export const fetchDevices = async (userId: string): Promise<Device[]> => {
         const querySnapshot = await getDocs(q);
         const devicesList: Device[] = querySnapshot.docs.map(doc => ({
             ...doc.data() as Device, // Spread the existing device data
-            deviceId: doc.id // Add the doc ID as deviceId
+            id: doc.id // Add the doc ID as deviceId
         }));
         console.log('Devices:', devicesList);
         return devicesList;
@@ -107,6 +107,25 @@ export const createDevice = async (device: Device): Promise<void> => {
         console.log(docRef);
     } catch (error) {
         console.error('Error creating device: ', error);
+    }
+};
+
+/**
+ * Updates a device document in the Firestore devices collection.
+ * 
+ * @param id - The ID of the device document to be updated.
+ * @param updatedDevice - The object containing the updated device data.
+ */
+export const updateDevice = async (id: string, updatedDevice: Partial<Device>): Promise<void> => {
+    try {
+        const deviceDocRef = doc(db, 'devices', id);
+        await updateDoc(deviceDocRef, {
+            ...updatedDevice,
+            updatedAt: Timestamp.now() // Update the `updatedAt` field to the current timestamp
+        });
+        console.log(`Device with ID ${id} updated successfully`);
+    } catch (error) {
+        console.error('Error updating device: ', error);
     }
 };
 

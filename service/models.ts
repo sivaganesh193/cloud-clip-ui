@@ -10,12 +10,14 @@ export interface User {
 
 // Interface for Devices Collection
 export interface Device {
+    id?: string;
     deviceId?: string;
     userId: string;
     deviceName: string;
     os: string;
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+    sync: boolean;
+    createdAt?: Timestamp;
+    updatedAt?: Timestamp;
 }
 
 // Interface for Clipboards Collection
