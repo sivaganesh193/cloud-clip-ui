@@ -218,13 +218,13 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     containerLight: {
-        // flex: 1,
+        flex: 1,
         backgroundColor: '#fff',
         // padding: 16,
         borderRadius: 16,
     },
     containerDark: {
-        // flex: 1,
+        flex: 1,
         backgroundColor: '#fff',
         // padding: 16,
         // borderRadius: 16,

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput } from 'react-native';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Alert, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,6 +8,10 @@ import Header from '@/components/Header';
 import { useNavigation } from 'expo-router';
 import { createClipboardEntry } from '@/service/firebaseService';
 import { AuthContext } from '@/auth/AuthContext';
+import { addDoc, collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { db } from '@/firebaseConfig';
+import * as Clipboard from 'expo-clipboard';
+
 
 const sharedData = [
 	{ id: '1', title: 'Shared Link 1', expiresIn: '2 hours' },
@@ -58,9 +62,58 @@ export default function SharedLinks() {
 	};
 
 
-	const handleShare = (title: string) => {
-		console.log(`Share link: ${title}`);
-		createMultipleClipboardEntries();
+	const handleShare = async (content: string) => {
+		try {
+			// Calculate expiration time (24 hours from now)
+			const expiresIn = Timestamp.now().toMillis() + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+			// Create a shared link object
+			const sharedLink = {
+				content,
+				createdAt: Timestamp.now(),
+				expiresAt: new Timestamp(expiresIn / 1000, 0), // Firestore Timestamp requires seconds and nanoseconds
+				...(user ? { createdBy: user.uid } : {}),
+			};
+
+			// Add a document with a unique ID to the 'sharedLinks' collection
+			const docRef = await addDoc(collection(db, 'sharedLinks'), sharedLink);
+			const linkCode = docRef.id;
+
+			// Define the link
+			const sharedLinkURL = `https://yourapp.com/shared/${linkCode}`;
+
+			if (Platform.OS === 'web') {
+				window.alert(`Share this link to view the text you just shared:\n${sharedLinkURL}`);
+			} else {
+				// Mobile: Show alert with copy button
+				Alert.alert(
+					'Link Generated!',
+					`Share this link to view the text:\n${sharedLinkURL}`,
+					[
+						{
+							text: 'Copy Code',
+							onPress: () => {
+								Clipboard.setString(linkCode); // Copy to clipboard for React Native
+								Alert.alert('Code copied to clipboard!');
+							},
+						},
+						{
+							text: 'View Link',
+							onPress: () => {
+								Linking.openURL(sharedLinkURL); // Open the link
+							},
+						},
+						{ text: 'OK' }
+					]
+				);
+			}
+
+			console.log(`Shared link created with ID: ${linkCode}`);
+
+
+		} catch (error) {
+			console.error('Error creating shared link: ', error);
+		}
 	};
 
 	const { user } = useContext(AuthContext);
@@ -76,7 +129,7 @@ export default function SharedLinks() {
 				<TextInput
 					style={isDarkMode ? styles.inputDark : styles.inputLight}
 					placeholder="Enter text to share"
-					placeholderTextColor={isDarkMode ? '#999' : '#999'}
+					placeholderTextColor={isDarkMode ? '#000' : '#000'}
 					value={"Hi hello world~!"}
 				/>
 
@@ -84,7 +137,7 @@ export default function SharedLinks() {
 					style={styles.shareButton}
 				>
 					<Ionicons name="share-outline" size={24} color="white" />
-					<ThemedText type="default" style={styles.shareButtonText}>
+					<ThemedText type="default" style={styles.shareButtonText} onPress={() => handleShare("HIIIII")}>
 						Share
 					</ThemedText>
 				</TouchableOpacity>
@@ -102,7 +155,7 @@ export default function SharedLinks() {
 									<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.title}</Text>
 									<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.expiresIn}</Text>
 								</View>
-								<TouchableOpacity onPress={() => handleShare(item.title)}>
+								<TouchableOpacity >
 									<Ionicons name="share-outline" size={24} color={'black'} />
 								</TouchableOpacity>
 							</View>
@@ -207,7 +260,8 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderRadius: 8,
 		paddingHorizontal: 8,
-		color: '#fff',
+		backgroundColor: '#fff',
+		color: '#000',
 		marginBottom: 16,
 	},
 	shareButton: {
