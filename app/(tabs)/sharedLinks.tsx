@@ -83,7 +83,41 @@ export default function SharedLinks() {
 			const sharedLinkURL = `https://yourapp.com/shared/${linkCode}`;
 
 			if (Platform.OS === 'web') {
-				window.alert(`Share this link to view the text you just shared:\n${sharedLinkURL}`);
+				// Create a div to hold the message and the button
+				const alertDiv = document.createElement('div');
+				alertDiv.style.position = 'fixed';
+				alertDiv.style.top = '50%';
+				alertDiv.style.left = '50%';
+				alertDiv.style.transform = 'translate(-50%, -50%)';
+				alertDiv.style.backgroundColor = 'white';
+				alertDiv.style.padding = '20px';
+				alertDiv.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+				alertDiv.style.zIndex = '1000'; // Make sure it's on top of other elements
+
+				// Create a paragraph to display the message
+				const message = document.createElement('p');
+				message.innerText = `Share this link to view the text you just shared:\n${sharedLinkURL}`;
+				alertDiv.appendChild(message);
+
+				// Create the "Copy Link" button
+				const copyButton = document.createElement('button');
+				copyButton.innerText = 'Copy Link';
+				copyButton.style.marginRight = '10px';
+				copyButton.onclick = () => {
+					navigator.clipboard.writeText(sharedLinkURL).then(() => {
+						alert('Link copied to clipboard!');
+					}).catch(err => {
+						console.error('Could not copy text: ', err);
+					});
+				};
+				alertDiv.appendChild(copyButton);
+				const closeButton = document.createElement('button');
+				closeButton.innerText = 'Close';
+				closeButton.onclick = () => {
+					document.body.removeChild(alertDiv);
+				};
+				alertDiv.appendChild(closeButton);
+				document.body.appendChild(alertDiv);
 			} else {
 				// Mobile: Show alert with copy button
 				Alert.alert(
