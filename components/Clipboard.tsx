@@ -5,16 +5,20 @@ import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { setClipboard } from '@/service/clipboardService';
 import { Clipboard } from '@/service/models';
+import { deleteClipboardEntry } from '@/service/firebaseService';
 
 interface ClipboardScreenProps {
     clipboardEntries: Clipboard[];
+    refreshData: () => void; // Update the type to be a function that returns void
 }
 
-const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries }) => {
+const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, refreshData }) => {
 
     // Function to handle copy action
-    const handleCopy = (text: string) => {
-        setClipboard(text);
+    const handleDelete = (id: string) => {
+        deleteClipboardEntry(id).then(() => {
+            refreshData();
+        });
     };
 
     return (
@@ -22,14 +26,17 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries }) =
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 {clipboardEntries.map((entry, index) => (
                     <View key={index} style={styles.entryContainer}>
-                        <ThemedText type="default" style={styles.clipboardText}>
+                        <ThemedText type='default' style={styles.clipboardText}>
                             {entry.content}
+                        </ThemedText>
+                        <ThemedText type='default' style={styles.clipboardDevice}>
+                            {entry.deviceId}
                         </ThemedText>
                         <TouchableOpacity
                             style={styles.copyButton}
-                            onPress={() => handleCopy(entry.content)}
+                            onPress={() => handleDelete(entry.id || '')}
                         >
-                            <Ionicons name="clipboard-outline" size={16} color={'black'} />
+                            <Ionicons name="trash-outline" size={16} color={'black'} />
                         </TouchableOpacity>
                     </View>
                 ))}
@@ -65,7 +72,14 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 16,
         flex: 1,
-        color: '#000'
+        color: '#000',
+        fontWeight: 'bold'
+    },
+    clipboardDevice: {
+        fontSize: 12,
+        lineHeight: 16,
+        flex: 1,
+        color: '#aaa'
     },
     copyButton: {
         marginLeft: 10,

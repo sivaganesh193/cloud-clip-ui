@@ -1,5 +1,5 @@
 import { db } from '../firebaseConfig'; // Import your Firestore instance
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { Clipboard, Device, User } from './models'; // Import the User interface
 
 /**
@@ -156,7 +156,7 @@ export const fetchClipboardEntries = async (userId: string): Promise<Clipboard[]
         const clipboardsRef = collection(db, 'clipboards');
         
         // Query to filter clipboard entries based on the user ID
-        const q = query(clipboardsRef, where('userId', '==', userId));
+        const q = query(clipboardsRef, where('userId', '==', userId),orderBy('updatedAt','desc'));
         
         // Fetch documents that match the query
         const querySnapshot = await getDocs(q);
