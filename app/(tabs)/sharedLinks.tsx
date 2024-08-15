@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Alert, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
@@ -11,6 +11,7 @@ import { AuthContext } from '@/auth/AuthContext';
 import { addDoc, collection, doc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 import * as Clipboard from 'expo-clipboard';
+import { getDomain } from '@/service/util';
 
 
 const sharedData = [
@@ -25,7 +26,7 @@ export default function SharedLinks() {
 	const colorScheme = useColorScheme();
 	const isDarkMode = colorScheme === 'dark';
 	const navigation = useNavigation();
-
+	const [textToShare, setTextToShare] = useState("");
 	interface Device {
 		userId: string;
 		deviceName: string;
@@ -79,8 +80,9 @@ export default function SharedLinks() {
 			const docRef = await addDoc(collection(db, 'sharedLinks'), sharedLink);
 			const linkCode = docRef.id;
 
-			// Define the link
-			const sharedLinkURL = `https://yourapp.com/shared/${linkCode}`;
+			const sharedLinkURL = `${getDomain()}/shared/${linkCode}`;
+			console.log(sharedLinkURL);
+			
 
 			if (Platform.OS === 'web') {
 				// Create a div to hold the message and the button
@@ -118,6 +120,9 @@ export default function SharedLinks() {
 				};
 				alertDiv.appendChild(closeButton);
 				document.body.appendChild(alertDiv);
+				setTimeout(() => {
+					document.body.removeChild(alertDiv);
+				}, 3000);
 			} else {
 				// Mobile: Show alert with copy button
 				Alert.alert(
@@ -164,14 +169,15 @@ export default function SharedLinks() {
 					style={isDarkMode ? styles.inputDark : styles.inputLight}
 					placeholder="Enter text to share"
 					placeholderTextColor={isDarkMode ? '#000' : '#000'}
-					value={"Hi hello world~!"}
+					value={textToShare}
+					onChangeText={(text) => setTextToShare(text)}
 				/>
 
 				<TouchableOpacity
 					style={styles.shareButton}
 				>
 					<Ionicons name="share-outline" size={24} color="white" />
-					<ThemedText type="default" style={styles.shareButtonText} onPress={() => handleShare("HIIIII")}>
+					<ThemedText type="default" style={styles.shareButtonText} onPress={() => handleShare(textToShare)}>
 						Share
 					</ThemedText>
 				</TouchableOpacity>
