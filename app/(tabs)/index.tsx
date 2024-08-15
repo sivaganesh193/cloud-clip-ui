@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
@@ -9,15 +9,17 @@ import Description from '@/components/Description';
 import { useNavigation } from 'expo-router';
 import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
-import { setClipboard } from '@/service/clipboardService';
-import { fetchClipboardEntries } from '@/service/firebaseService';
+import { getClipboard, setClipboard } from '@/service/clipboardService';
+import { createClipboardEntry, fetchClipboardEntries } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
+import { getDeviceId } from '@/service/deviceService';
 
 export default function Homepage() {
 	const colorScheme = useColorScheme();
 	const isDarkMode = colorScheme === 'dark';
 
-	const [data, setData] = useState("In the realm of operating systems, Windows has long been a dominant player, offering a broad range of functionalities and user-friendly features that cater to a diverse audience. With its rich graphical user interface, extensive support for software applications, and robust security features, Windows provides a versatile environment for both personal and professional use. Over the years, it has evolved through numerous versions, each bringing enhancements in performance, usability, and integration with modern technologies. From its early days to the latest updates, Windows has consistently strived to balance innovation with stability, making it a preferred choice for many users around the world. Whether it’s for gaming, productivity, or everyday tasks, the adaptability and wide compatibility of Windows continue to solidify its position as a leading operating system in the industry.");
+	const [data, setData] = useState("");
+    const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 
 	const authContext = useContext(AuthContext); // Get AuthContext
@@ -32,37 +34,59 @@ export default function Homepage() {
 		setClipboard(text);
 	};
 
+	const handleSave = (text: string) => {
+		if(user && currentDeviceId){
+			createClipboardEntry({userId: user.uid, deviceId: currentDeviceId, content: text}).then(() => {
+				getClipboardData();
+			});
+		}
+	};
+
+	const getClipboardData = async () => {
+		const deviceId = await getDeviceId();
+		setCurrentDeviceId(deviceId);
+		if (user) {
+			fetchClipboardEntries(user.uid)
+				.then((data) => setClipboardEntries(data));
+		}
+	};
+
 	useEffect(() => {
-		const getClipboardData = async () => {
-			if (user) {
-				fetchClipboardEntries(user.uid)
-					.then((data) => setClipboardEntries(data));
-				console.log(clipboardEntries);
-			}
-		};
-		getClipboardData();
-	}, [user]); // Re-fetch data when user changes
+        const initialize = async () => {
+            try {
+                // Start the interval only after the currentDeviceId is set
+                const intervalId = setInterval(() => {
+                    const op = getClipboard().then((text) => {
+						console.log('copied text in home',text);
+						setData(text);
+					})
+                }, 1000);
 
-	// useEffect(() => {
-	//     const interval = setInterval(() => {
-	//         checkClipboardChanges((newContent) => {
-	//             console.log('New clipboard content:', newContent);
-	//             // Handle the new clipboard content (e.g., update state, send to server)
-	//         });
-	//     }, 1000); // Check every 1 second, adjust as needed
+                // Cleanup the interval on unmount
+                return () => clearInterval(intervalId);
+            } catch (error) {
+                console.error('Error during fetching clipboard data:', error);
+            }
+        };
+        initialize();
+    }, [user]);
 
-	//     return () => clearInterval(interval); // Clean up the interval on component unmount
-	// }, []);
+	useEffect(() => {
+        const initialize = async () => {
+            try {
+                // Start the interval only after the currentDeviceId is set
+                const intervalId = setInterval(() => {
+                    getClipboardData();
+                }, 5000);
 
-	// useEffect(() => {
-	// 	const subscription = addClipboardListener(() => {
-	// 	  CBoard.getStringAsync().then(content => {
-	// 		console.log('Copy pasta! Here\'s the string that was copied: ' + content)
-	// 	  });
-	//   });
-	// //   removeClipboardListener(subscription);
-	// }, []);
-
+                // Cleanup the interval on unmount
+                return () => clearInterval(intervalId);
+            } catch (error) {
+                console.error('Error during fetching clipboard data:', error);
+            }
+        };
+        initialize();
+    }, [user]);
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
@@ -75,22 +99,34 @@ export default function Homepage() {
 						<ThemedView style={styles.container}>
 							<View style={styles.headerWithButton}>
 								<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
-								<TouchableOpacity style={styles.copyButton} onPress={() => handleCopy(data)}>
+									<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
 									<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
-									<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
+									{Platform.OS === 'web' && (
+										<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
+									)}
+								</TouchableOpacity>
+								<TouchableOpacity style={styles.copyButton} onPress={() => handleSave(data)}>
+									<Ionicons name="save-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+									{Platform.OS === 'web' && (
+										<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Save Text</Text>
+									)}
 								</TouchableOpacity>
 							</View>
 							<ThemedView style={styles.textBox}>
-								<ScrollView style={styles.scrollView}>
-									<ThemedText type="default" style={styles.text}>{data}</ThemedText>
-								</ScrollView>
+								<TextInput
+									style={[styles.text, styles.textInput]}
+									value={data}
+									onChangeText={setData}
+									multiline={true} // Allows text to wrap and expand vertically
+									editable={true} // Makes the text input editable
+								/>
 							</ThemedView>
 						</ThemedView>
 						<ThemedView style={styles.container}>
 							<View style={styles.headerWithButton}>
 								<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries</ThemedText>
 							</View>
-							<ClipboardScreen clipboardEntries={clipboardEntries} />
+							<ClipboardScreen clipboardEntries={clipboardEntries} refreshData={getClipboardData}/>
 						</ThemedView>
 					</>
 				)}
@@ -104,17 +140,14 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: '#fff',
 		padding: 16,
-		overflow: 'scroll'
 	},
 	text: {
 		color: '#000'
 	},
 	centerContainer: {
-		alignSelf: 'center',
 		backgroundColor: '#fff',
 		padding: 16,
 		borderRadius: 16,
-		overflow: 'hidden'
 	},
 	container: {
 		backgroundColor: '#fff',
@@ -205,14 +238,14 @@ const styles = StyleSheet.create({
 		marginLeft: 10,
 	},
 	textBox: {
+		flex: 1,
 		shadowColor: '#F0F1CF',
 		shadowOffset: { width: 4, height: 4 },
 		borderColor: '#000',
 		borderStyle: 'solid',
 		borderWidth: 1,
-		padding: 10,
+		borderRadius: 5,
 		marginTop: 10,
-		height: 200,
 		backgroundColor: '#fff'
 	},
 	headerWithButton: {
@@ -233,5 +266,11 @@ const styles = StyleSheet.create({
 	},
 	scrollView: {
 		flex: 1,
-	}
+	},
+	textInput: {
+		minHeight: 180, // Ensures a minimum height but allows for expansion
+		flex: 1, // Ensures the TextInput takes the full height and width of the container
+		textAlignVertical: 'top', // Aligns text at the top if multiline
+		padding: 10, // Removes default padding to match the ThemedText style
+	},
 });
