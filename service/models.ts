@@ -25,6 +25,7 @@ export interface Clipboard {
     id?: string;
     userId: string;
     deviceId: string;
+    deviceName?: string;
     content: string;
     createdAt?: Timestamp;
     updatedAt?: Timestamp;

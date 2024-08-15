@@ -10,9 +10,9 @@ import { useNavigation } from 'expo-router';
 import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
-import { createClipboardEntry, fetchClipboardEntries } from '@/service/firebaseService';
+import { createClipboardEntry, fetchClipboardEntries, fetchDevices } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
-import { getDeviceId } from '@/service/deviceService';
+import { getDeviceId, setDeviceId } from '@/service/deviceService';
 
 export default function Homepage() {
 	const colorScheme = useColorScheme();
@@ -42,9 +42,24 @@ export default function Homepage() {
 		}
 	};
 
+	const getDeviceDetails = async () => {
+		console.log(user,currentDeviceId);
+		if (user && !currentDeviceId) {
+            const deviceId = await getDeviceId();
+			if(deviceId){
+				const devices = await fetchDevices(user.uid);
+				devices.forEach((device) => {
+					if(device.deviceId?.includes(deviceId)){
+						setDeviceId(device.deviceId);
+						setCurrentDeviceId(device.deviceId)
+					}
+				})
+			}
+        }
+	};
+
 	const getClipboardData = async () => {
-		const deviceId = await getDeviceId();
-		setCurrentDeviceId(deviceId);
+		getDeviceDetails();
 		if (user) {
 			fetchClipboardEntries(user.uid)
 				.then((data) => setClipboardEntries(data));
@@ -52,41 +67,37 @@ export default function Homepage() {
 	};
 
 	useEffect(() => {
-        const initialize = async () => {
-            try {
-                // Start the interval only after the currentDeviceId is set
-                const intervalId = setInterval(() => {
-                    const op = getClipboard().then((text) => {
-						console.log('copied text in home',text);
-						setData(text);
-					})
-                }, 1000);
-
-                // Cleanup the interval on unmount
-                return () => clearInterval(intervalId);
-            } catch (error) {
-                console.error('Error during fetching clipboard data:', error);
-            }
-        };
-        initialize();
-    }, [user]);
-
-	useEffect(() => {
-        const initialize = async () => {
-            try {
-                // Start the interval only after the currentDeviceId is set
-                const intervalId = setInterval(() => {
-                    getClipboardData();
-                }, 5000);
-
-                // Cleanup the interval on unmount
-                return () => clearInterval(intervalId);
-            } catch (error) {
-                console.error('Error during fetching clipboard data:', error);
-            }
-        };
-        initialize();
-    }, [user]);
+		const initialize = async () => {
+			try {
+				// Fetch clipboard data immediately
+				await getClipboardData();
+	
+				// Start the first interval to get clipboard text every second
+				const clipboardIntervalId = setInterval(() => {
+					getClipboard()
+						.then((text) => {
+							// setData(text)
+						})
+						.catch((err) => console.log(err));
+				}, 1000);
+	
+				// Start the second interval to fetch clipboard entries every 5 seconds
+				const dataIntervalId = setInterval(() => {
+					getClipboardData();
+				}, 5000);
+	
+				// Cleanup both intervals on unmount
+				return () => {
+					clearInterval(clipboardIntervalId);
+					clearInterval(dataIntervalId);
+				};
+			} catch (error) {
+				console.error('Error during initialization:', error);
+			}
+		};
+	
+		initialize();
+	}, [user]);
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
@@ -112,7 +123,7 @@ export default function Homepage() {
 									)}
 								</TouchableOpacity>
 							</View>
-							<ThemedView style={styles.textBox}>
+							<View style={styles.textBox}>
 								<TextInput
 									style={[styles.text, styles.textInput]}
 									value={data}
@@ -120,7 +131,7 @@ export default function Homepage() {
 									multiline={true} // Allows text to wrap and expand vertically
 									editable={true} // Makes the text input editable
 								/>
-							</ThemedView>
+							</View>
 						</ThemedView>
 						<ThemedView style={styles.container}>
 							<View style={styles.headerWithButton}>
@@ -239,15 +250,11 @@ const styles = StyleSheet.create({
 	},
 	textBox: {
 		flex: 1,
-		shadowColor: '#F0F1CF',
-		shadowOffset: { width: 4, height: 4 },
-		borderColor: '#000',
-		borderStyle: 'solid',
-		borderWidth: 1,
-		borderRadius: 5,
-		marginTop: 10,
-		backgroundColor: '#fff'
+		borderWidth: 1,         // Thickness of the border
+		borderColor: '#000',    // Color of the border
+		borderRadius: 5         // Optional: Rounds the corners of the border
 	},
+	
 	headerWithButton: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',

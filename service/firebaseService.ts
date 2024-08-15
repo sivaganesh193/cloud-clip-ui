@@ -156,20 +156,37 @@ export const fetchClipboardEntries = async (userId: string): Promise<Clipboard[]
         const clipboardsRef = collection(db, 'clipboards');
         
         // Query to filter clipboard entries based on the user ID
-        const q = query(clipboardsRef, where('userId', '==', userId),orderBy('updatedAt','desc'));
+        const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
         
-        // Fetch documents that match the query
-        const querySnapshot = await getDocs(q);
+        // Fetch clipboard documents that match the query
+        const clipboardQuerySnapshot = await getDocs(clipboardQuery);
         
-        // Map through documents and extract clipboard data
-        const clipboardEntries: Clipboard[] = querySnapshot.docs.map(doc => ({
-            ...doc.data() as Clipboard, // Spread the existing clipboard data
-            id: doc.id // Add the doc ID as clipboardId
-        }));
+        // Map through clipboard documents and extract clipboard data
+        const clipboardEntries: Clipboard[] = [];
         
-        // Log the fetched clipboard entries
-        console.log('Clipboard Entries:', clipboardEntries);
-        
+        for (const doc of clipboardQuerySnapshot.docs) {
+            const clipboardData = doc.data() as Clipboard;
+            clipboardData.id = doc.id;
+            
+            // Fetch the device information based on deviceId
+            const devicesRef = collection(db, 'devices');
+            const deviceQuery = query(devicesRef, where('deviceId', '==', clipboardData.deviceId));
+            const deviceQuerySnapshot = await getDocs(deviceQuery);
+            
+            const deviceData = deviceQuerySnapshot.docs.length > 0
+                ? deviceQuerySnapshot.docs[0].data() as Device
+                : null;
+
+            // Merge the clipboard data with device information if available
+            clipboardEntries.push({
+                ...clipboardData,
+                deviceName: deviceData ? deviceData.deviceName : 'Unknown Device',
+            });
+        }
+
+        // Log the fetched clipboard entries with device information
+        console.log('Clipboard Entries with Device Info:', clipboardEntries);
+
         return clipboardEntries;
     } catch (error) {
         console.error('Error fetching clipboard entries: ', error);

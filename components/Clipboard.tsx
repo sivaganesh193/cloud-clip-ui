@@ -21,16 +21,29 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, ref
         });
     };
 
+    const truncateContent = (content: string, startLength = 15, endLength = 15) => {
+        if (content.length <= startLength + endLength) {
+            return content; // No need to truncate if content is short enough
+        }
+        const start = content.slice(0, startLength);
+        const end = content.slice(-endLength);
+        return `${start} _ ${end}`;
+    };
+    
+
     return (
         <ThemedView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 {clipboardEntries.map((entry, index) => (
                     <View key={index} style={styles.entryContainer}>
                         <ThemedText type='default' style={styles.clipboardText}>
-                            {entry.content}
+                            {truncateContent(entry.content)}
                         </ThemedText>
                         <ThemedText type='default' style={styles.clipboardDevice}>
-                            {entry.deviceId}
+                            Content Length: {entry.content.length}
+                        </ThemedText>
+                        <ThemedText type='default' style={styles.clipboardDevice}>
+                            Device: {entry.deviceName}
                         </ThemedText>
                         <TouchableOpacity
                             style={styles.copyButton}
