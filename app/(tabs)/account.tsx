@@ -270,7 +270,7 @@ export default function Account() {
                         <Text>{'\n'}</Text>
                         <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                             <ThemedText type="subtitle" style={styles.text}>My Devices</ThemedText>
-                            <Text>{'\n'}</Text>
+                            {/* <Text>{'\n'}</Text> */}
                             <FlatList
                                 data={devices}
                                 keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
@@ -398,6 +398,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     listContent: {
+        paddingTop: 15,
         paddingBottom: 16,
     },
     itemContainerLight: {

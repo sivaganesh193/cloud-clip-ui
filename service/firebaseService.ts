@@ -154,25 +154,25 @@ export const fetchClipboardEntries = async (userId: string): Promise<Clipboard[]
     try {
         // Reference to the clipboards collection
         const clipboardsRef = collection(db, 'clipboards');
-        
+
         // Query to filter clipboard entries based on the user ID
         const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
-        
+
         // Fetch clipboard documents that match the query
         const clipboardQuerySnapshot = await getDocs(clipboardQuery);
-        
+
         // Map through clipboard documents and extract clipboard data
         const clipboardEntries: Clipboard[] = [];
-        
+
         for (const doc of clipboardQuerySnapshot.docs) {
             const clipboardData = doc.data() as Clipboard;
             clipboardData.id = doc.id;
-            
+
             // Fetch the device information based on deviceId
             const devicesRef = collection(db, 'devices');
             const deviceQuery = query(devicesRef, where('deviceId', '==', clipboardData.deviceId));
             const deviceQuerySnapshot = await getDocs(deviceQuery);
-            
+
             const deviceData = deviceQuerySnapshot.docs.length > 0
                 ? deviceQuerySnapshot.docs[0].data() as Device
                 : null;
@@ -279,7 +279,7 @@ export const createSharedLink = async (shared: Shared): Promise<string> => {
             ...shared,
             createdAt: now,
             updatedAt: now,
-			expiryAt:  new Timestamp(now.seconds + 24 * 60 * 60, now.nanoseconds)
+            expiryAt: new Timestamp(now.seconds + 24 * 60 * 60, now.nanoseconds)
         });
         console.log(`Shared link with ID ${docRef.id} created successfully`);
         return docRef.id;
@@ -306,3 +306,21 @@ export const deleteSharedLink = async (sharedId: string): Promise<void> => {
     }
 };
 
+export const fetchSharedLink = async (clipboardId: any): Promise<Shared | null> => {
+    // try {
+    //     const sharedRef = doc(db, 'clipboards',clipboardId.id);
+    //     const querySnapshot = await getDoc(sharedRef);
+    //     if (!querySnapshot) {
+    //         console.log("No matching documents found.");
+    //         return null;
+    //     }
+
+    
+    //     console.log("Fetched shared link:", sharedLink);
+    //     return sharedLink;
+    // } catch (error) {
+    //     console.error('Error fetching shared link with clipboard content: ', error);
+    //     throw error;
+    // }
+    return null;
+};

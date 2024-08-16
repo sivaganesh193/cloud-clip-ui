@@ -254,7 +254,6 @@ const styles = StyleSheet.create({
 		borderColor: '#000',    // Color of the border
 		borderRadius: 5         // Optional: Rounds the corners of the border
 	},
-	
 	headerWithButton: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
@@ -275,9 +274,9 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	textInput: {
-		minHeight: 180, // Ensures a minimum height but allows for expansion
-		flex: 1, // Ensures the TextInput takes the full height and width of the container
-		textAlignVertical: 'top', // Aligns text at the top if multiline
-		padding: 10, // Removes default padding to match the ThemedText style
+		minHeight: 180,
+		flex: 1, 
+		textAlignVertical: 'top', 
+		padding: 10, 
 	},
 });

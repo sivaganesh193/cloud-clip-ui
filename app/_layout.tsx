@@ -1,11 +1,9 @@
-// _layout.tsx
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useContext, useEffect } from 'react';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, AuthContext } from '@/auth/AuthContext'; // Import AuthProvider and AuthContext
 
@@ -32,10 +30,9 @@ export default function RootLayout() {
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
-        <Stack.Screen name="/shared" options={{ headerShown: false }} />
+          {/* <Stack.Screen name="/shared/:id" options={{ headerShown: false }} /> */}
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
-          
         </Stack>
       </ThemeProvider>
     </AuthProvider>

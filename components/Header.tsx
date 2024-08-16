@@ -2,11 +2,12 @@ import LoginPopup from '@/app/Login';
 import React, { useState, useContext } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
 import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
+import { useRouter } from 'expo-router';
 
 const Header = ({ navigation }: { navigation: any }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
- 
+
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
 
@@ -21,13 +22,18 @@ const Header = ({ navigation }: { navigation: any }) => {
       console.error('Error logging out: ', error);
     }
   };
+  const router = useRouter();
+
+  const navigateToHome = () => {
+    router.push('/'); // Redirect to the homepage
+  };
 
   return (
     <View style={styles.header}>
-      <View style={styles.logoContainer}>
+      <TouchableOpacity style={styles.logoContainer} onPress={navigateToHome} activeOpacity={0.7}>
         <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.headerTitle}>Cloud-Clip</Text>
-      </View>
+      </TouchableOpacity>
       {!user ? (
         <TouchableOpacity style={styles.loginButton} onPress={openModal}>
           <Text style={styles.loginButtonText}>Log In</Text>
