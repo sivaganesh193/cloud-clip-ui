@@ -273,7 +273,7 @@ export default function Account() {
                             <Text>{'\n'}</Text>
                             <FlatList
                                 data={devices}
-                                keyExtractDevor={(item) => item.deviceId || Crypto.randomUUID()}
+                                keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
                                 renderItem={renderItem}
                                 contentContainerStyle={styles.listContent}
                             />
