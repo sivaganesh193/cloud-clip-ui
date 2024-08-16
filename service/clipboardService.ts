@@ -11,7 +11,7 @@ export const setClipboard = async (text: string | null): Promise<void> => {
         try {
             await Clipboard.setStringAsync(text);
             console.log('Text copied to clipboard');
-            Alert.alert('Copied to Clipboard', text);
+            window.alert('Copied to Clipboard ' + text); //use saroja common alert
         } catch (error) {
             console.error('Error copying text to clipboard:', error);
             throw error; // Optionally, rethrow the error if needed
@@ -27,7 +27,6 @@ export const setClipboard = async (text: string | null): Promise<void> => {
 export const getClipboard = async (): Promise<string> => {
     try {
         const text = await Clipboard.getStringAsync();
-        console.log('Text retrieved from clipboard:', text);
         return text;
     } catch (error) {
         console.error('Error retrieving text from clipboard:', error);

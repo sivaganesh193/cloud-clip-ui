@@ -234,10 +234,10 @@ export const deleteClipboardEntry = async (clipboardId: string): Promise<void> =
 };
 
 /**
- * Fetches all shared links for a given clipboardId.
+ * Fetches all shared links along with their associated clipboard content for a given userId.
  * 
  * @param userId - The ID of the user whose shared links are to be fetched.
- * @returns An array of Shared objects.
+ * @returns An array of objects containing shared link details and their associated clipboard content.
  */
 export const fetchSharedLinks = async (userId: string): Promise<Shared[]> => {
     try {
@@ -245,16 +245,25 @@ export const fetchSharedLinks = async (userId: string): Promise<Shared[]> => {
         const q = query(sharedRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
         const querySnapshot = await getDocs(q);
         const sharedLinks: Shared[] = [];
-        querySnapshot.forEach((doc) => {
-            sharedLinks.push({ id: doc.id, ...doc.data() } as Shared);
-        });
-        
+        for (const link of querySnapshot.docs) {
+            const sharedLink = { id: link.id, ...link.data() } as Shared;
+            // Fetch clipboard content based on clipboardId
+            const clipboardDocRef = doc(db, 'clipboards', sharedLink.clipboardId);
+            const clipboardDoc = await getDoc(clipboardDocRef);
+            const clipboardData = clipboardDoc.data() as Clipboard;
+            console.log(clipboardData);
+            sharedLinks.push({
+                ...sharedLink,
+                clipboardContent: clipboardData.content || String(null)
+            })
+        }
         return sharedLinks;
     } catch (error) {
-        console.error('Error fetching shared links: ', error);
+        console.error('Error fetching shared links with clipboard content: ', error);
         throw error;
     }
 };
+
 
 /**
  * Creates a new shared link in the Firestore shared collection with an auto-generated ID.

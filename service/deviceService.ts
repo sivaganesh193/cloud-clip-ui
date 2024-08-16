@@ -10,7 +10,6 @@ const getAppDeviceId = async (): Promise<string> => {
         if (!deviceId) {
             deviceId = Crypto.randomUUID();
         }
-        console.log('App Device ID:', deviceId);
         return deviceId;
     } catch (error) {
         console.error('Error getting app device ID:', error);
@@ -24,7 +23,6 @@ const getWebDeviceId = async (): Promise<string> => {
         if (!deviceId) {
             deviceId = String(Device.totalMemory);
         }
-        console.log('Web Device ID:', deviceId);
         return deviceId;
     } catch (error) {
         console.error('Error getting web device ID:', error);
