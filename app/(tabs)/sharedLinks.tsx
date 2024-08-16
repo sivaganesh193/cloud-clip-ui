@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Alert, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
@@ -6,156 +6,155 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
 import { useNavigation } from 'expo-router';
-import { createClipboardEntry } from '@/service/firebaseService';
+import { createClipboardEntry, createSharedLink, fetchSharedLinks } from '@/service/firebaseService';
 import { AuthContext } from '@/auth/AuthContext';
-import { addDoc, collection, doc, setDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/firebaseConfig';
-import * as Clipboard from 'expo-clipboard';
 import { getDomain } from '@/service/util';
-
-
-const sharedData = [
-	{ id: '1', title: 'Shared Link 1', expiresIn: '2 hours' },
-	{ id: '2', title: 'Shared Link 2', expiresIn: '1 day' },
-	{ id: '3', title: 'Shared Link 3', expiresIn: '3 days' },
-	{ id: '4', title: 'Shared Link 4', expiresIn: '5 hours' },
-	{ id: '5', title: 'Shared Link 5', expiresIn: '12 hours' },
-];
+import { getDeviceId } from '@/service/deviceService';
+import { Shared } from '@/service/models';
+import * as Clipboard from 'expo-clipboard';
+import * as Crypto from 'expo-crypto';
 
 export default function SharedLinks() {
 	const colorScheme = useColorScheme();
 	const isDarkMode = colorScheme === 'dark';
 	const navigation = useNavigation();
 	const [textToShare, setTextToShare] = useState("");
-	interface Device {
-		userId: string;
-		deviceName: string;
-		os: string;
-	}
-
-	const createMultipleClipboardEntries = async () => {
-		try {
-			const entries = [
-				// Entries with userId 'k7vz5bk1K1cnusnUugBtEUreb2q2' and deviceId '36244b68-4a45-4cb0-867a-dc61d46326df'
-				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 1' },
-				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 2' },
-				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: '36244b68-4a45-4cb0-867a-dc61d46326df', content: 'Clipboard content 3' },
-
-				// Entries with userId 'k7vz5bk1K1cnusnUugBtEUreb2q2' and different deviceId
-				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device4', content: 'Clipboard content 4' },
-				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device5', content: 'Clipboard content 5' },
-				{ userId: 'k7vz5bk1K1cnusnUugBtEUreb2q2', deviceId: 'device6', content: 'Clipboard content 6' },
-
-				// Entries with different userId
-				{ userId: 'user8', deviceId: 'device8', content: 'Clipboard content 7' },
-				{ userId: 'user9', deviceId: 'device9', content: 'Clipboard content 8' },
-				{ userId: 'user10', deviceId: 'device10', content: 'Clipboard content 9' },
-				{ userId: 'user11', deviceId: 'device11', content: 'Clipboard content 10' },
-			];
-
-			for (const entry of entries) {
-				const id = await createClipboardEntry(entry);
-				console.log(`Created clipboard entry with ID: ${id}`);
-			}
-		} catch (error) {
-			console.error('Error creating multiple clipboard entries: ', error);
-		}
-	};
-
+	const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
+	const [sharedLinks, setSharedLinks] = useState<Shared[]>([]); // Define the type for the state
 
 	const handleShare = async (content: string) => {
 		try {
-			// Calculate expiration time (24 hours from now)
-			const expiresIn = Timestamp.now().toMillis() + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+			if (user && currentDeviceId) {
+				const clipRef = await createClipboardEntry({
+					userId: user.uid,
+					deviceId: currentDeviceId,
+					content: content
+				});
+				console.log('id',clipRef);
 
-			// Create a shared link object
-			const sharedLink = {
-				content,
-				createdAt: Timestamp.now(),
-				expiresAt: new Timestamp(expiresIn / 1000, 0), // Firestore Timestamp requires seconds and nanoseconds
-				...(user ? { createdBy: user.uid } : {}),
-			};
+				const sharedRef = await createSharedLink({
+					userId: user.uid,
+					clipboardId: clipRef,
+					code: Crypto.randomUUID(), // will change url to smaller code
+				})
+				console.log('shared id',sharedRef);
+				
+				const linkCode = clipRef;
+				const sharedLinkURL = `${getDomain()}/shared/${linkCode}`;
+				console.log(sharedLinkURL);
 
-			// Add a document with a unique ID to the 'sharedLinks' collection
-			const docRef = await addDoc(collection(db, 'sharedLinks'), sharedLink);
-			const linkCode = docRef.id;
 
-			const sharedLinkURL = `${getDomain()}/shared/${linkCode}`;
-			console.log(sharedLinkURL);
-			
+				if (Platform.OS === 'web') {
+					// Create a div to hold the message and the button
+					const alertDiv = document.createElement('div');
+					alertDiv.style.position = 'fixed';
+					alertDiv.style.top = '50%';
+					alertDiv.style.left = '50%';
+					alertDiv.style.transform = 'translate(-50%, -50%)';
+					alertDiv.style.backgroundColor = 'white';
+					alertDiv.style.padding = '20px';
+					alertDiv.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+					alertDiv.style.zIndex = '1000'; // Make sure it's on top of other elements
 
-			if (Platform.OS === 'web') {
-				// Create a div to hold the message and the button
-				const alertDiv = document.createElement('div');
-				alertDiv.style.position = 'fixed';
-				alertDiv.style.top = '50%';
-				alertDiv.style.left = '50%';
-				alertDiv.style.transform = 'translate(-50%, -50%)';
-				alertDiv.style.backgroundColor = 'white';
-				alertDiv.style.padding = '20px';
-				alertDiv.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-				alertDiv.style.zIndex = '1000'; // Make sure it's on top of other elements
+					// Create a paragraph to display the message
+					const message = document.createElement('p');
+					message.innerText = `Share this link to view the text you just shared:\n${sharedLinkURL}`;
+					alertDiv.appendChild(message);
 
-				// Create a paragraph to display the message
-				const message = document.createElement('p');
-				message.innerText = `Share this link to view the text you just shared:\n${sharedLinkURL}`;
-				alertDiv.appendChild(message);
-
-				// Create the "Copy Link" button
-				const copyButton = document.createElement('button');
-				copyButton.innerText = 'Copy Link';
-				copyButton.style.marginRight = '10px';
-				copyButton.onclick = () => {
-					navigator.clipboard.writeText(sharedLinkURL).then(() => {
-						alert('Link copied to clipboard!');
-					}).catch(err => {
-						console.error('Could not copy text: ', err);
-					});
-				};
-				alertDiv.appendChild(copyButton);
-				const closeButton = document.createElement('button');
-				closeButton.innerText = 'Close';
-				closeButton.onclick = () => {
-					document.body.removeChild(alertDiv);
-				};
-				alertDiv.appendChild(closeButton);
-				document.body.appendChild(alertDiv);
-				setTimeout(() => {
-					document.body.removeChild(alertDiv);
-				}, 3000);
-			} else {
-				// Mobile: Show alert with copy button
-				Alert.alert(
-					'Link Generated!',
-					`Share this link to view the text:\n${sharedLinkURL}`,
-					[
-						{
-							text: 'Copy Code',
-							onPress: () => {
-								Clipboard.setString(linkCode); // Copy to clipboard for React Native
-								Alert.alert('Code copied to clipboard!');
+					// Create the "Copy Link" button
+					const copyButton = document.createElement('button');
+					copyButton.innerText = 'Copy Link';
+					copyButton.style.marginRight = '10px';
+					copyButton.onclick = () => {
+						navigator.clipboard.writeText(sharedLinkURL).then(() => {
+							alert('Link copied to clipboard!');
+						}).catch(err => {
+							console.error('Could not copy text: ', err);
+						});
+					};
+					alertDiv.appendChild(copyButton);
+					const closeButton = document.createElement('button');
+					closeButton.innerText = 'Close';
+					closeButton.onclick = () => {
+						document.body.removeChild(alertDiv);
+					};
+					alertDiv.appendChild(closeButton);
+					document.body.appendChild(alertDiv);
+					setTimeout(() => {
+						document.body.removeChild(alertDiv);
+					}, 3000);
+				} else {
+					// Mobile: Show alert with copy button
+					Alert.alert(
+						'Link Generated!',
+						`Share this link to view the text:\n${sharedLinkURL}`,
+						[
+							{
+								text: 'Copy Code',
+								onPress: () => {
+									Clipboard.setString(linkCode); // Copy to clipboard for React Native
+									Alert.alert('Code copied to clipboard!');
+								},
 							},
-						},
-						{
-							text: 'View Link',
-							onPress: () => {
-								Linking.openURL(sharedLinkURL); // Open the link
+							{
+								text: 'View Link',
+								onPress: () => {
+									Linking.openURL(sharedLinkURL); // Open the link
+								},
 							},
-						},
-						{ text: 'OK' }
-					]
-				);
+							{ text: 'OK' }
+						]
+					);
+				}
+
+				console.log(`Shared link created with ID: ${linkCode}`);
 			}
-
-			console.log(`Shared link created with ID: ${linkCode}`);
-
 
 		} catch (error) {
 			console.error('Error creating shared link: ', error);
 		}
 	};
 
-	const { user } = useContext(AuthContext);
+	const authContext = useContext(AuthContext); // Get AuthContext
+	if (!authContext) {
+		// Handle the case where AuthContext is undefined
+		throw new Error("AuthContext must be used within an AuthProvider");
+	}
+	const { user } = authContext; // Use AuthContext to get the user
+
+	const fetchData = async () => {
+		if (user && currentDeviceId) {
+			const shared = await fetchSharedLinks(user.uid);
+			console.log(shared);
+			setSharedLinks(shared);
+		}
+	};
+
+	useEffect(() => {
+		const initialize = async () => {
+			try {
+				// Fetch device ID and user details concurrently
+				const deviceId = await getDeviceId();
+				setCurrentDeviceId(deviceId);
+
+				if (deviceId) {
+					fetchData();
+				}
+
+				// Start the interval only after the currentDeviceId is set
+				const intervalId = setInterval(() => {
+					fetchData();
+				}, 5000);
+
+				// Cleanup the interval on unmount
+				return () => clearInterval(intervalId);
+			} catch (error) {
+				console.error('Error during initialization:', error);
+			}
+		};
+
+		initialize();
+	}, [user, currentDeviceId]);
 
 	return (
 		<SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
@@ -172,12 +171,12 @@ export default function SharedLinks() {
 					value={textToShare}
 					onChangeText={(text) => setTextToShare(text)}
 				/>
-
 				<TouchableOpacity
 					style={styles.shareButton}
+					onPress={() => handleShare(textToShare)}
 				>
 					<Ionicons name="share-outline" size={24} color="white" />
-					<ThemedText type="default" style={styles.shareButtonText} onPress={() => handleShare(textToShare)}>
+					<ThemedText type="default" style={styles.shareButtonText} >
 						Share
 					</ThemedText>
 				</TouchableOpacity>
@@ -187,17 +186,22 @@ export default function SharedLinks() {
 					<ThemedText type="subtitle" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
 					<Text>{'\n'}</Text>
 					<FlatList
-						data={sharedData}
-						keyExtractor={(item) => item.id}
+						data={sharedLinks}
+						keyExtractor={(item) => item.id || Crypto.randomUUID()}
 						renderItem={({ item }) => (
 							<View style={isDarkMode ? styles.itemContainerLight : styles.itemContainerLight}>
 								<View>
-									<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.title}</Text>
-									<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.expiresIn}</Text>
+									<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.clipboardId}</Text>
+									<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {item.expiryAt?.toString()}</Text>
 								</View>
-								<TouchableOpacity >
-									<Ionicons name="share-outline" size={24} color={'black'} />
-								</TouchableOpacity>
+								<View style={styles.buttonContainer}>
+									<TouchableOpacity style={styles.button}>
+										<Ionicons name="trash-outline" size={24} color={'black'} />
+									</TouchableOpacity>
+									<TouchableOpacity style={styles.button}>
+										<Ionicons name="share-social-outline" size={24} color={'black'} />
+									</TouchableOpacity>
+								</View>
 							</View>
 						)}
 						contentContainerStyle={styles.listContent}
@@ -261,6 +265,14 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 0, height: 2 },
 		shadowRadius: 8,
 		elevation: 3,
+	},
+	buttonContainer: {
+		flexDirection: 'row',     // Align buttons in a row
+		justifyContent: 'flex-end',  // Align buttons to the right end
+		alignItems: 'center',     // Align buttons vertically center
+	},
+	button: {
+		marginLeft: 10
 	},
 	itemTitleLight: {
 		fontSize: 18,

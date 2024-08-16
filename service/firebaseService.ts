@@ -1,6 +1,6 @@
 import { db } from '../firebaseConfig'; // Import your Firestore instance
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
-import { Clipboard, Device, User } from './models'; // Import the User interface
+import { Clipboard, Device, Shared, User } from './models'; // Import the User interface
 
 /**
  * Adds a user with a given ID to the Firestore users collection.
@@ -232,3 +232,68 @@ export const deleteClipboardEntry = async (clipboardId: string): Promise<void> =
         console.error('Error deleting clipboard entry: ', error);
     }
 };
+
+/**
+ * Fetches all shared links for a given clipboardId.
+ * 
+ * @param userId - The ID of the user whose shared links are to be fetched.
+ * @returns An array of Shared objects.
+ */
+export const fetchSharedLinks = async (userId: string): Promise<Shared[]> => {
+    try {
+        const sharedRef = collection(db, 'sharedLinks');
+        const q = query(sharedRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const sharedLinks: Shared[] = [];
+        querySnapshot.forEach((doc) => {
+            sharedLinks.push({ id: doc.id, ...doc.data() } as Shared);
+        });
+        
+        return sharedLinks;
+    } catch (error) {
+        console.error('Error fetching shared links: ', error);
+        throw error;
+    }
+};
+
+/**
+ * Creates a new shared link in the Firestore shared collection with an auto-generated ID.
+ * 
+ * @param shared - The shared object to be created.
+ * @returns The ID of the created shared link document.
+ */
+export const createSharedLink = async (shared: Shared): Promise<string> => {
+    try {
+        const sharedRef = collection(db, 'sharedLinks');
+        const now = Timestamp.now();
+        const docRef = await addDoc(sharedRef, {
+            ...shared,
+            createdAt: now,
+            updatedAt: now,
+			expiryAt:  new Timestamp(now.seconds + 24 * 60 * 60, now.nanoseconds)
+        });
+        console.log(`Shared link with ID ${docRef.id} created successfully`);
+        return docRef.id;
+    } catch (error) {
+        console.error('Error creating shared link: ', error);
+        throw error;
+    }
+};
+
+/**
+ * Deletes a shared link from the Firestore shared collection.
+ * 
+ * @param sharedId - The ID of the shared link to be deleted.
+ * @returns A promise that resolves when the shared link is deleted.
+ */
+export const deleteSharedLink = async (sharedId: string): Promise<void> => {
+    try {
+        const sharedDocRef = doc(db, 'sharedLinks', sharedId);
+        await deleteDoc(sharedDocRef);
+        console.log(`Shared link with ID ${sharedId} deleted successfully`);
+    } catch (error) {
+        console.error('Error deleting shared link: ', error);
+        throw error;
+    }
+};
+

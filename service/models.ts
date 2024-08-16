@@ -33,9 +33,11 @@ export interface Clipboard {
 
 // Interface for Shared Collection
 export interface Shared {
+    id?: string;
     clipboardId: string;
+    userId: string;
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
     code: string;
-    expiryAt: Timestamp;
+    expiryAt?: Timestamp;
 }
