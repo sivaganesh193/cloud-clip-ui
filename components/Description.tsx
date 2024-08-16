@@ -52,17 +52,18 @@ const Description = () => {
 
 const styles = StyleSheet.create({
     containerLight: {
-        flex: 1,
+        // flex: 1,
         backgroundColor: '#fff',
         padding: 16,
     },
     containerDark: {
-        flex: 1,
+        // flex: 1,
         backgroundColor: '#fff',
         padding: 16,
     },
     descriptionContainer: {
-        backgroundColor: '#fff'
+        alignSelf: 'center',
+        backgroundColor: '#fff',
     },
     title: {
         fontSize: 28,

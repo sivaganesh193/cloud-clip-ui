@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform, Modal } from 'react-native';
+import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform, Modal, TouchableWithoutFeedback } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -13,6 +13,8 @@ import { Device } from '@/service/models';
 import * as Crypto from 'expo-crypto';
 import Header from '@/components/Header';
 import { useNavigation } from '@react-navigation/native';
+import Alert from '@/components/Alert';
+import Confirmation from '@/components/Confirmation';
 
 export default function Account() {
     const colorScheme = useColorScheme();
@@ -32,6 +34,25 @@ export default function Account() {
     }
     const { user, logout } = authContext; // Use AuthContext to get the user
     const email = user?.email || 'user@example.com';
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertMessage, setAlertMessage] = useState("");
+    const [confirmationVisible, setConfirmationVisible] = useState(false);
+    const [deviceIDToRemove, setDeviceIDToRemove] = useState("");
+
+    const showConfirmation = (item: Device) => {
+        setDeviceIDToRemove(item.id || '');
+        setConfirmationVisible(true);
+    };
+
+    const handleCancel = () => {
+        setConfirmationVisible(false);
+    };
+
+    const showAlert = (message: string) => {
+        setAlertVisible(true);
+        setAlertMessage(message);
+        setTimeout(() => setAlertVisible(false), 3000);
+    };
 
     const fetchData = async () => {
         if (user && currentDeviceId) {
@@ -79,7 +100,9 @@ export default function Account() {
     const handleSave = () => {
         if (user) {
             updateUser(user.uid, name);
-        }
+            showAlert("Account information saved!");
+        } else
+            showAlert("An error occured while saving the information");
     };
 
     const handleOpen = () => {
@@ -91,7 +114,7 @@ export default function Account() {
             setErrorMessage('Device name must be at least 5 characters long.');
             return;
         }
-        if(currentDeviceId){
+        if (currentDeviceId) {
             const deviceId = currentDeviceId + '_*_' + deviceName;
             const deviceOS = getDeviceOS();
             if (user) {
@@ -114,8 +137,9 @@ export default function Account() {
         }
     };
 
-    const handleRemove = (id: string) => {
-        deleteDevice(id).then(() => fetchData());
+    const handleRemove = () => {
+        setConfirmationVisible(false);
+        deleteDevice(deviceIDToRemove).then(() => fetchData());
     };
 
     const handleLogout = () => {
@@ -141,23 +165,35 @@ export default function Account() {
             <View style={[
                 highlightIndex === index ? styles.itemHighlighted : null,
                 isDarkMode ? styles.itemContainerDark : styles.itemContainerLight
-            ]}>                
-                <View>
+            ]}>
+                {/* <View style={styles.container}> */}
+                <View style={styles.textContainer}>
                     <Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.deviceName}</Text>
                     <Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Type: {item.os}</Text>
                 </View>
-                <TouchableOpacity onPress={() => handleSync(index)}>
-                    <Ionicons
-                        name={item.sync ? "sync-circle" : "sync-outline"}
-                        size={24}
-                        color={item.sync ? 'green' : 'black'}
-                    />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleRemove(item.id || '')}>
-                    <Ionicons name="trash-outline" size={24} color={'black'} />
-                </TouchableOpacity>
+                <View style={styles.iconsContainer}>
+                    <TouchableOpacity onPress={() => handleSync(index)} style={styles.iconButton}>
+                        <Ionicons
+                            name={item.sync ? "sync-circle" : "sync-outline"}
+                            size={24}
+                            color={item.sync ? 'green' : 'black'}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => showConfirmation(item)} style={styles.iconButton}>
+                        <Ionicons name="trash-outline" size={24} color={'black'} />
+                    </TouchableOpacity>
+                </View>
+                {/* </View> */}
             </View>
         );
+    };
+
+    const handleDismiss = () => {
+        console.log("Alert dismissed");
+    };
+
+    const handleCloseModal = () => {
+        setModalVisible(false);
     };
 
     const navigation = useNavigation();
@@ -169,25 +205,38 @@ export default function Account() {
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalView}>
-                        <Text style={styles.modalText}>Device Name: </Text>
-                        <TextInput
-                            style={styles.input}
-                            value={deviceName}
-                            onChangeText={setDeviceName}
-                        />
-                        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                        <TouchableOpacity
-                            style={isDarkMode ? styles.buttonDark : styles.buttonLight}
-                            onPress={handleAddDevice}
-                        >
-                            <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Add Device</Text>
-                        </TouchableOpacity>
+                <TouchableWithoutFeedback onPress={handleCloseModal}>
+
+                    <View style={styles.modalContainer}>
+                        <TouchableWithoutFeedback>
+                            <View style={styles.modalView}>
+                                <Text style={styles.modalText}>Device Name: </Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={deviceName}
+                                    onChangeText={setDeviceName}
+                                />
+                                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                                <TouchableOpacity
+                                    style={isDarkMode ? styles.buttonDark : styles.buttonLight}
+                                    onPress={handleAddDevice}
+                                >
+                                    <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Add Device</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableWithoutFeedback>
                     </View>
-                </View>
+                </TouchableWithoutFeedback>
             </Modal>
             <Header navigation={navigation} />
+            <Alert message={alertMessage} visible={alertVisible} onDismiss={handleDismiss} />
+            <Confirmation
+                message="Are you sure you want to proceed?"
+                visible={confirmationVisible}
+                onConfirm={handleRemove}
+                onCancel={handleCancel}
+                onDismiss={handleDismiss}
+            />
             <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                 {user ? (
                     <View style={styles.content}>
@@ -196,7 +245,7 @@ export default function Account() {
                         <View style={styles.fieldContainer}>
                             <ThemedText type="subtitle" style={styles.text}>Email</ThemedText>
                             <TextInput
-                                style={isDarkMode ? styles.inputDark : styles.inputLight}
+                                style={styles.emailInput}
                                 value={email}
                                 editable={false}
                                 placeholderTextColor={isDarkMode ? '#999' : '#999'}
@@ -220,10 +269,11 @@ export default function Account() {
                         </TouchableOpacity>
                         <Text>{'\n'}</Text>
                         <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-                            <ThemedText type="subtitle">My Devices</ThemedText>
+                            <ThemedText type="subtitle" style={styles.text}>My Devices</ThemedText>
+                            <Text>{'\n'}</Text>
                             <FlatList
                                 data={devices}
-                                keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
+                                keyExtractDevor={(item) => item.deviceId || Crypto.randomUUID()}
                                 renderItem={renderItem}
                                 contentContainerStyle={styles.listContent}
                             />
@@ -265,22 +315,33 @@ const styles = StyleSheet.create({
     safeAreaLight: {
         flex: 1,
         backgroundColor: '#fff',
-        padding: 16,
+        paddingTop: 18,
     },
     safeAreaDark: {
         flex: 1,
         backgroundColor: '#fff',
-        padding: 16,
+        paddingTop: 18,
+    },
+    iconsContainer: {
+        flexDirection: 'row',
+    },
+    iconButton: {
+        marginLeft: 10, // Add spacing between icons
     },
     text: {
         color: '#000',
     },
+    textContainer: {
+        flex: 1, // Takes up remaining space
+    },
     containerLight: {
         backgroundColor: '#fff',
         borderRadius: 16,
+        paddingHorizontal: 16,
     },
     containerDark: {
         flex: 1,
+        paddingHorizontal: 16,
         backgroundColor: '#fff',
     },
     fieldContainer: {
@@ -318,6 +379,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         backgroundColor: '#000',
         alignItems: 'center',
+        minWidth: 100
     },
     buttonDark: {
         marginTop: 24,
@@ -325,6 +387,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         backgroundColor: '#000',
         alignItems: 'center',
+        minWidth: 100
     },
     buttonTextLight: {
         color: '#fff',
@@ -468,4 +531,13 @@ const styles = StyleSheet.create({
         color: 'red',
         marginBottom: 10,
     },
+    emailInput: {
+        height: 40,
+        borderColor: '#000',
+        borderWidth: 1,
+        marginTop: 2,
+        paddingHorizontal: 8,
+        color: 'darkslategrey',
+        backgroundColor: 'lightgray'
+    }
 });

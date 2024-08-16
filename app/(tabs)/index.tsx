@@ -43,7 +43,7 @@ export default function Homepage() {
 	};
 
 	const getDeviceDetails = async () => {
-		console.log(user,currentDeviceId);
+		// console.log(user,currentDeviceId);
 		if (user && !currentDeviceId) {
             const deviceId = await getDeviceId();
 			if(deviceId){
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#fff',
-		padding: 16,
+		paddingTop: 18
 	},
 	text: {
 		color: '#000'

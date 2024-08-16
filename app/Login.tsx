@@ -127,24 +127,20 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
       Alert.alert("Forgot Password Error", message);
     }
   };
+  const handleModalContentPress = (e: any) => {
+    // Prevent event from bubbling up to the backdrop
+    e.stopPropagation();
+  };
 
   return (
-    <Modal
-      visible={isVisible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={() => {
-        onClose();
-        resetFields();
-      }}
-    >
+    <Modal visible={isVisible} transparent={true} animationType="fade" onRequestClose={() => { onClose(); resetFields(); }}>
       <TouchableWithoutFeedback onPress={() => {
         onClose();
         resetFields();
       }}>
         <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <ThemedView style={[styles.modalBox, isDarkMode ? styles.darkBox : styles.lightBox]}>
+          <TouchableWithoutFeedback onPress={handleModalContentPress}>
+            <View style={[styles.modalBox, isDarkMode ? styles.darkBox : styles.lightBox]}>
               {isForgotPasswordMode ? (
                 <>
                   <Text style={styles.titleText}>Reset Password</Text>
@@ -250,7 +246,7 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
                   </View>
                 </>
               )}
-            </ThemedView>
+            </View>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
