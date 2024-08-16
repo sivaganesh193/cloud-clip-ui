@@ -164,7 +164,7 @@ export default function Account() {
         return (
             <View style={[
                 highlightIndex === index ? styles.itemHighlighted : null,
-                isDarkMode ? styles.itemContainerDark : styles.itemContainerLight
+                styles.itemContainerLight
             ]}>
                 {/* <View style={styles.container}> */}
                 <View style={styles.textContainer}>
