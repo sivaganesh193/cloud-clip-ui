@@ -13,6 +13,7 @@ import { getClipboard, setClipboard } from '@/service/clipboardService';
 import { createClipboardEntry, fetchClipboardEntries } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
 import useDeviceDetails from '@/hook/useDeviceDetails';
+import Alert from '@/components/Alert';
 
 export default function Homepage() {
 	const colorScheme = useColorScheme();
@@ -21,6 +22,8 @@ export default function Homepage() {
 	const [data, setData] = useState("");
 	const [saveTextData, setSaveTextData] = useState("");
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
+	const [alertVisible, setAlertVisible] = useState(false);
+	const [alertMessage, setAlertMessage] = useState('');
 
 	const authContext = useContext(AuthContext); // Get AuthContext
 	if (!authContext) {
@@ -31,15 +34,26 @@ export default function Homepage() {
 	const navigation = useNavigation();
 	const { deviceId, deviceName } = useDeviceDetails();
 
+	const showAlert = (message: string) => {
+		setAlertMessage(message);
+		setAlertVisible(true);
+		setTimeout(() => setAlertVisible(false), 3000); // Dismiss alert after 3 seconds
+	};
+
 	const handleCopy = (text: string) => {
-		setClipboard(text);
+		setClipboard(text, showAlert, "Copied to clipboard"); // Pass the showAlert function
 	};
 
 	const handleSave = (text: string) => {
 		if (user && deviceId) {
-			createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text }).then(() => {
-				getClipboardData();
-			});
+			if (text) {
+				createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text }).then(() => {
+					getClipboardData();
+				});
+				showAlert("Text saved to clipboard")
+			} else {
+				showAlert("Please enter some text to save!")
+			}
 		}
 	};
 
@@ -78,7 +92,7 @@ export default function Homepage() {
 
 				const dataIntervalId = setInterval(() => {
 					getClipboardData();
-				}, 2147483647);
+				}, 5000);
 
 				// Cleanup function for intervals when component unmounts
 				return () => {
@@ -93,73 +107,76 @@ export default function Homepage() {
 		initialize();
 	}, [user]);
 	return (
-		<ScrollView
-			contentContainerStyle={{ flexGrow: 1 }}
-			showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
-			horizontal={false} // Ensures horizontal scrolling is disabled
-		>
-			<SafeAreaView style={styles.safeArea}>
-				<Header navigation={navigation} />
-				<ThemedView style={styles.centerContainer}>
-					{!user ? (
-						<Description />
-					) : (
-						<>
-							<ThemedView style={styles.container}>
-								<View style={styles.headerWithButton}>
-									<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
-									<View style={styles.buttonContainer}>
-										<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
-											<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
-											{Platform.OS === 'web' && (
-												<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
-											)}
-										</TouchableOpacity>
+		<>
+			<Alert message={alertMessage} visible={alertVisible} onDismiss={undefined} />
+			<ScrollView
+				contentContainerStyle={{ flexGrow: 1 }}
+				showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
+				horizontal={false} // Ensures horizontal scrolling is disabled
+			>
+				<SafeAreaView style={styles.safeArea}>
+					<Header navigation={navigation} />
+					<ThemedView style={styles.centerContainer}>
+						{!user ? (
+							<Description />
+						) : (
+							<>
+								<ThemedView style={styles.container}>
+									<View style={styles.headerWithButton}>
+										<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
+										<View style={styles.buttonContainer}>
+											<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
+												<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+												{Platform.OS === 'web' && (
+													<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
+												)}
+											</TouchableOpacity>
+										</View>
 									</View>
-								</View>
-								<View style={styles.textBox}>
-									<TextInput
-										style={[styles.text, styles.textInput]}
-										value={data}
-										onChangeText={setData}
-										multiline={true}
-										editable={true}
-									/>
-								</View>
-							</ThemedView>
-							<ThemedView style={styles.container}>
-								<View style={styles.headerWithButton}>
-									<ThemedText type="subtitle" style={styles.text}>Save to clipboard</ThemedText>
-									<View style={styles.buttonContainer}>
-										<TouchableOpacity style={styles.copyButton} onPress={() => handleSave(saveTextData)}>
-											<Ionicons name="save-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
-											{Platform.OS === 'web' && (
-												<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Save Text</Text>
-											)}
-										</TouchableOpacity>
+									<View style={styles.textBox}>
+										<TextInput
+											style={[styles.text, styles.textInput]}
+											value={data}
+											onChangeText={setData}
+											multiline={true}
+											editable={false}
+										/>
 									</View>
-								</View>
-								<View style={styles.textBox}>
-									<TextInput
-										style={[styles.text, styles.textInput]}
-										value={saveTextData}
-										onChangeText={setSaveTextData}
-										multiline={true} // Allows text to wrap and expand vertically
-										editable={true} // Makes the text input editable
-									/>
-								</View>
-							</ThemedView>
-							<ThemedView style={styles.container}>
-								<View style={styles.headerWithButton}>
-									<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries</ThemedText>
-								</View>
-								<ClipboardScreen clipboardEntries={clipboardEntries} refreshData={getClipboardData} />
-							</ThemedView>
-						</>
-					)}
-				</ThemedView>
-			</SafeAreaView>
-		</ScrollView>
+								</ThemedView>
+								<ThemedView style={styles.container}>
+									<View style={styles.headerWithButton}>
+										<ThemedText type="subtitle" style={styles.text}>Save to clipboard</ThemedText>
+										<View style={styles.buttonContainer}>
+											<TouchableOpacity style={styles.copyButton} onPress={() => handleSave(saveTextData)}>
+												<Ionicons name="save-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+												{Platform.OS === 'web' && (
+													<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Save Text</Text>
+												)}
+											</TouchableOpacity>
+										</View>
+									</View>
+									<View style={styles.textBox}>
+										<TextInput
+											style={[styles.text, styles.textInput]}
+											value={saveTextData}
+											onChangeText={setSaveTextData}
+											multiline={true} // Allows text to wrap and expand vertically
+											editable={true} // Makes the text input editable
+										/>
+									</View>
+								</ThemedView>
+								<ThemedView style={styles.container}>
+									<View style={styles.headerWithButton}>
+										<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries</ThemedText>
+									</View>
+									<ClipboardScreen clipboardEntries={clipboardEntries} refreshData={getClipboardData} showAlert={showAlert} />
+								</ThemedView>
+							</>
+						)}
+					</ThemedView>
+				</SafeAreaView>
+			</ScrollView>
+		</>
 	);
 }
 

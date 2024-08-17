@@ -24,8 +24,14 @@ export default function SharedLinks() {
 	const [sharedLinks, setSharedLinks] = useState<Shared[]>([]); // Define the type for the state
 	const { deviceId, deviceName } = useDeviceDetails();
 
+	const [alertVisible, setAlertVisible] = useState(false);
+	const [alertMessage, setAlertMessage] = useState('');
 
-
+	const showAlert = (message: string) => {
+		setAlertMessage(message);
+		setAlertVisible(true);
+		setTimeout(() => setAlertVisible(false), 3000); // Dismiss alert after 3 seconds
+	};
 
 	const authContext = useContext(AuthContext); // Get AuthContext
 	if (!authContext) {
@@ -100,7 +106,7 @@ export default function SharedLinks() {
 					/>
 					<TouchableOpacity
 						style={styles.shareButton}
-						onPress={() => handleShare(textToShare, user, deviceId, deviceName, setTextToShare)}
+						onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
 					>
 						<Ionicons name="share-outline" size={24} color="white" />
 						<ThemedText type="default" style={styles.shareButtonText} >

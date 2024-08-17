@@ -8,19 +8,17 @@ import { getDomain } from './util';
  * 
  * @param text - The text to be copied to the clipboard.
  */
-export const setClipboard = async (text: string | null): Promise<void> => {
+export const setClipboard = async (text: string | null, showAlert: (message: string) => void, alertMessage: string): Promise<void> => {
     if (text) {
         try {
             await Clipboard.setStringAsync(text);
-            console.log('Text copied to clipboard');
-            window.alert('Copied to Clipboard ' + text); //use saroja common alert
+            showAlert(alertMessage);
         } catch (error) {
-            console.error('Error copying text to clipboard:', error);
-            throw error; // Optionally, rethrow the error if needed
+            showAlert('An unexpected error occured');
+            throw error;
         }
     }
 };
-
 /**
  * Gets the current text from the clipboard.
  * 
@@ -63,7 +61,7 @@ export const getSharedLinkURL = (code: string): string => {
     return sharedLinkURL;
 }
 
-export const handleShare = async (content: string, user: any, deviceId: string, deviceName: string, setTextToShare?: (text: string) => void) => {
+export const handleShare = async (content: string, user: any, deviceId: string, deviceName: string, showAlert: (message: string) => void, setTextToShare?: (text: string) => void) => {
     if (content) {
         try {
             let clipRef: any;
@@ -96,7 +94,7 @@ export const handleShare = async (content: string, user: any, deviceId: string, 
                 })
             }
             const sharedLinkURL = getSharedLinkURL(sharedRef);
-            await setClipboard(sharedLinkURL);
+            await setClipboard(sharedLinkURL, showAlert, "Shared link created and copied to clipboard.");
             if (setTextToShare) setTextToShare('');
         }
         catch (error) {
