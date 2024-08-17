@@ -15,6 +15,7 @@ import * as Crypto from 'expo-crypto';
 import { Timestamp } from 'firebase/firestore';
 import { getSharedLinkURL, handleShare, setClipboard } from '@/service/clipboardService';
 import useDeviceDetails from '@/hook/useDeviceDetails';
+import NoItemsComponent from '@/components/NoItems';
 
 export default function SharedLinks() {
 	const colorScheme = useColorScheme();
@@ -118,29 +119,38 @@ export default function SharedLinks() {
 					<ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
 						<ThemedText type="subtitle" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
 						<Text>{'\n'}</Text>
-						<FlatList
-							data={sharedLinks}
-							keyExtractor={(item) => item.id || Crypto.randomUUID()}
-							renderItem={({ item }) => (
-								<TouchableOpacity onPress={() => router.push(`/shared/${item.id || ''}`)}>
-									<View style={styles.itemContainerLight}>
-										<View style={styles.textContainer}>
-											<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{truncateContent(item.content || "")}</Text>
-											<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {calculateTimeLeft(item.expiryAt || null)}</Text>
-										</View>
-										<View style={styles.buttonContainer}>
-											<TouchableOpacity style={styles.button} onPress={() => handleRemove(item.id || '')}>
-												<Ionicons name="trash-outline" size={24} color={'black'} />
-											</TouchableOpacity>
-											<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
-												<Ionicons name="share-social-outline" size={24} color={'black'} />
-											</TouchableOpacity>
-										</View>
-									</View>
-								</TouchableOpacity>
+						<View style={styles.flatListContainer}>
+							{sharedLinks.length > 0 ? (
+								<FlatList
+									data={sharedLinks}
+									keyExtractor={(item) => item.id || Crypto.randomUUID()}
+									renderItem={({ item }) => (
+										<TouchableOpacity onPress={() => router.push(`/shared/${item.id || ''}`)}>
+											<View style={styles.itemContainerLight}>
+												<View style={styles.textContainer}>
+													<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
+														{truncateContent(item.content || "")}
+													</Text>
+													<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>
+														Expires in: {calculateTimeLeft(item.expiryAt || null)}
+													</Text>
+												</View>
+												<View style={styles.buttonContainer}>
+													<TouchableOpacity style={styles.button} onPress={() => handleRemove(item.id || '')}>
+														<Ionicons name="trash-outline" size={24} color={'black'} />
+													</TouchableOpacity>
+													<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
+														<Ionicons name="share-social-outline" size={24} color={'black'} />
+													</TouchableOpacity>
+												</View>
+											</View>
+										</TouchableOpacity>
+									)}
+									contentContainerStyle={styles.listContent}
+								/>) : (
+								<NoItemsComponent></NoItemsComponent>
 							)}
-							contentContainerStyle={styles.listContent}
-						/>
+						</View>
 					</ThemedView>
 				)}
 			</SafeAreaView>
@@ -153,6 +163,14 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: '#fff',
 		paddingTop: Platform.OS === 'web' ? 0 : 18,
+	},
+	flatListContainer: {
+		height: 300,
+		paddingRight: 5,
+		marginBottom: 10,
+	},
+	scrollContainer: {
+		padding: 10,
 	},
 	containerLight: {
 		// flex: 1,
@@ -198,11 +216,11 @@ const styles = StyleSheet.create({
 		marginLeft: 10
 	},
 	itemTitleLight: {
-		fontSize: 18,
+		fontSize: 16,
 		color: '#000',
 	},
 	itemTitleDark: {
-		fontSize: 18,
+		fontSize: 16,
 		color: '#000',
 	},
 	itemExpiryLight: {

@@ -61,7 +61,7 @@ export default function Homepage() {
 		if (user) {
 			fetchClipboardEntries(user.uid)
 				.then((data) => setClipboardEntries(data));
-			console.log(clipboardEntries);
+			console.log("clipboard", clipboardEntries);
 		}
 	};
 

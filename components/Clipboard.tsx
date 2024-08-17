@@ -8,6 +8,7 @@ import { Clipboard } from '@/service/models';
 import { deleteClipboardEntry } from '@/service/firebaseService';
 import { truncateContent } from '@/service/util';
 import { AuthContext } from '@/auth/AuthContext';
+import NoItemsComponent from './NoItems';
 
 interface ClipboardScreenProps {
     clipboardEntries: Clipboard[];
@@ -38,37 +39,41 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, ref
 
     return (
         <ThemedView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {clipboardEntries.map((entry, index) => (
-                    <View key={entry.id} style={styles.entryContainer}>
-                        <View style={styles.textContainer}>
-                            <ThemedText type='default' style={styles.clipboardText}>
-                                {truncateContent(entry.content)}
-                            </ThemedText>
-                            <ThemedText type='default' style={styles.clipboardDevice}>
-                                Content Length: {entry.content.length}
-                            </ThemedText>
-                            <ThemedText type='default' style={styles.clipboardDevice}>
-                                Device: {entry.deviceName || 'Unknown Device'}
-                            </ThemedText>
+            {clipboardEntries.length > 0 ? (
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    {clipboardEntries.map((entry, index) => (
+                        <View key={entry.id} style={styles.entryContainer}>
+                            <View style={styles.textContainer}>
+                                <ThemedText type='default' style={styles.clipboardText}>
+                                    {truncateContent(entry.content)}
+                                </ThemedText>
+                                <ThemedText type='default' style={styles.clipboardDevice}>
+                                    Content Length: {entry.content.length}
+                                </ThemedText>
+                                <ThemedText type='default' style={styles.clipboardDevice}>
+                                    Device: {entry.deviceName || 'Unknown Device'}
+                                </ThemedText>
+                            </View>
+                            <View style={styles.iconContainer}>
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={() => handleDelete(entry.id || '')}
+                                >
+                                    <Ionicons name="trash-outline" size={20} color={'black'} />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={() => handleShare(entry.content, user, entry.deviceId, entry.deviceName, showAlert)}
+                                >
+                                    <Ionicons name="share-outline" size={20} color={'black'} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                        <View style={styles.iconContainer}>
-                            <TouchableOpacity
-                                style={styles.iconButton}
-                                onPress={() => handleDelete(entry.id || '')}
-                            >
-                                <Ionicons name="trash-outline" size={20} color={'black'} />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.iconButton}
-                                onPress={() => handleShare(entry.content, user, entry.deviceId, entry.deviceName, showAlert)}
-                            >
-                                <Ionicons name="share-outline" size={20} color={'black'} />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                ))}
-            </ScrollView>
+                    ))}
+                </ScrollView>
+            ) : (
+                <NoItemsComponent></NoItemsComponent>
+            )}
         </ThemedView>
     );
 };

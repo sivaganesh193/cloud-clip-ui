@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import Alert from '@/components/Alert';
 import Confirmation from '@/components/Confirmation';
 import useDeviceDetails from '@/hook/useDeviceDetails';
+import NoItemsComponent from '@/components/NoItems';
 
 export default function Account() {
     const colorScheme = useColorScheme();
@@ -251,12 +252,15 @@ export default function Account() {
                                 <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                                     <ThemedText type="subtitle" style={styles.text}>My Devices</ThemedText>
                                     {/* <Text>{'\n'}</Text> */}
-                                    <FlatList
-                                        data={devices}
-                                        keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
-                                        renderItem={renderItem}
-                                        contentContainerStyle={styles.listContent}
-                                    />
+                                    {devices.length > 0 ? (
+                                        <FlatList
+                                            data={devices}
+                                            keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
+                                            renderItem={renderItem}
+                                            contentContainerStyle={styles.listContent}
+                                        />) : (
+                                        <NoItemsComponent></NoItemsComponent>
+                                    )}
                                     <TouchableOpacity
                                         style={[
                                             styles.addDeviceButton,

@@ -276,7 +276,7 @@ export const deleteClipboardEntry = async (clipboardId: string): Promise<void> =
 export const listenToSharedLinks = (userId: string, onUpdate: (sharedLinks: Shared[]) => void) => {
     try {
         const sharedRef = collection(db, 'sharedLinks');
-        const q = query(sharedRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+        const q = query(sharedRef, where('userId', '==', userId), where('expiryAt', '>', Timestamp.now()), orderBy('updatedAt', 'desc'));
 
         // Set up a real-time listener
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
