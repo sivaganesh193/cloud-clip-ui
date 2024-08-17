@@ -17,6 +17,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    document.title = "Cloud-Clip";
     if (loaded) {
       SplashScreen.hideAsync();
     }
