@@ -73,21 +73,24 @@ export const fetchUser = async (userId: string): Promise<User | null> => {
  * @param userId - The ID of the user whose devices are to be fetched.
  * @returns A promise that resolves to an array of devices.
  */
-export const fetchDevices = async (userId: string): Promise<Device[]> => {
-    try {
-        const devicesRef = collection(db, 'devices');
-        const q = query(devicesRef, where('userId', '==', userId));
-        const querySnapshot = await getDocs(q);
-        const devicesList: Device[] = querySnapshot.docs.map(doc => ({
-            ...doc.data() as Device, // Spread the existing device data
-            id: doc.id // Add the doc ID as deviceId
-        }));
-        console.log('Devices:', devicesList);
-        return devicesList;
-    } catch (error) {
-        console.error('Error fetching devices: ', error);
-        return [];
+export const fetchDevices = async (userId: string | null): Promise<Device[]> => {
+    if(userId){
+        try {
+            const devicesRef = collection(db, 'devices');
+            const q = query(devicesRef, where('userId', '==', userId));
+            const querySnapshot = await getDocs(q);
+            const devicesList: Device[] = querySnapshot.docs.map(doc => ({
+                ...doc.data() as Device, // Spread the existing device data
+                id: doc.id // Add the doc ID as deviceId
+            }));
+            console.log('Devices:', devicesList);
+            return devicesList;
+        } catch (error) {
+            console.error('Error fetching devices: ', error);
+            return [];
+        }
     }
+    return [];
 };
 
 /**
@@ -273,7 +276,7 @@ export const listenToSharedLinks = (userId: string, onUpdate: (sharedLinks: Shar
                 ...doc.data() as Shared, // Spread the existing data
                 id: doc.id // Add the doc ID
             }));
-            console.log('refetched',querySnapshot.docs);
+            console.log('Refetched Shared Links');
             onUpdate(sharedLinks); // Call the callback with the updated shared links
         });
 

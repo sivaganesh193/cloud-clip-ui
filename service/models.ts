@@ -11,7 +11,7 @@ export interface User {
 // Interface for Devices Collection
 export interface Device {
     id?: string;
-    deviceId?: string;
+    deviceId: string;
     userId: string;
     deviceName: string;
     os: string;
@@ -25,7 +25,7 @@ export interface Clipboard {
     id?: string;
     userId: string;
     deviceId: string;
-    deviceName?: string;
+    deviceName: string;
     content: string;
     createdAt?: Timestamp;
     updatedAt?: Timestamp;

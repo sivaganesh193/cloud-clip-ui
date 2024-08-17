@@ -10,16 +10,16 @@ import { useNavigation } from 'expo-router';
 import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
-import { createClipboardEntry, fetchClipboardEntries, fetchDevices } from '@/service/firebaseService';
+import { createClipboardEntry, fetchClipboardEntries } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
 import { getDeviceId, setDeviceId } from '@/service/deviceService';
+import useDeviceDetails from '@/hook/useDeviceDetails';
 
 export default function Homepage() {
 	const colorScheme = useColorScheme();
 	const isDarkMode = colorScheme === 'dark';
 
 	const [data, setData] = useState("");
-	const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 
 	const authContext = useContext(AuthContext); // Get AuthContext
@@ -29,38 +29,21 @@ export default function Homepage() {
 	}
 	const { user } = authContext; // Use AuthContext to get the user
 	const navigation = useNavigation();
+	const { deviceId, deviceName } = useDeviceDetails();
 
 	const handleCopy = (text: string) => {
 		setClipboard(text);
 	};
 
 	const handleSave = (text: string) => {
-		if (user && currentDeviceId) {
-			createClipboardEntry({ userId: user.uid, deviceId: currentDeviceId, content: text }).then(() => {
+		if (user && deviceId) {
+			createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text }).then(() => {
 				getClipboardData();
 			});
 		}
 	};
 
-	const getDeviceDetails = async () => {
-		// console.log(user,currentDeviceId);
-		if (user && !currentDeviceId) {
-			const deviceId = await getDeviceId();
-			if (deviceId) {
-				const devices: any[] = []
-				// await fetchDevices(user.uid);
-				devices.forEach((device) => {
-					if (device.deviceId?.includes(deviceId)) {
-						setDeviceId(device.deviceId);
-						setCurrentDeviceId(device.deviceId)
-					}
-				})
-			}
-		}
-	};
-
 	const getClipboardData = async () => {
-		getDeviceDetails();
 		if (user) {
 			fetchClipboardEntries(user.uid)
 				.then((data) => setClipboardEntries(data));
