@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform, Modal, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform, Modal, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -56,7 +56,7 @@ export default function Account() {
 
     const fetchData = async () => {
         if (user && currentDeviceId) {
-            const devices = await fetchDevices(user.uid);
+            // const devices = await fetchDevices(user.uid);
             setDevices(devices);
             const matchingIndex = currentDeviceId ? devices.findIndex(device => device.deviceId?.includes(currentDeviceId)) : -1;
             setHighlightIndex(matchingIndex);
@@ -82,12 +82,10 @@ export default function Account() {
                     fetchData();
                 }
 
-                // Start the interval only after the currentDeviceId is set
                 const intervalId = setInterval(() => {
                     fetchData();
-                }, 5000);
+                }, 240000000);
 
-                // Cleanup the interval on unmount
                 return () => clearInterval(intervalId);
             } catch (error) {
                 console.error('Error during initialization:', error);
@@ -198,129 +196,131 @@ export default function Account() {
 
     const navigation = useNavigation();
     return (
-        <SafeAreaView style={isDarkMode ? styles.safeAreaDark : styles.safeAreaLight}>
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <TouchableWithoutFeedback onPress={handleCloseModal}>
 
-                    <View style={styles.modalContainer}>
-                        <TouchableWithoutFeedback>
-                            <View style={styles.modalView}>
-                                <Text style={styles.modalText}>Device Name: </Text>
+        <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
+            horizontal={false} // Ensures horizontal scrolling is disabled
+        >
+            <SafeAreaView style={styles.safeArea}>
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => setModalVisible(false)}
+                >
+                    <TouchableWithoutFeedback onPress={handleCloseModal}>
+
+                        <View style={styles.modalContainer}>
+                            <TouchableWithoutFeedback>
+                                <View style={styles.modalView}>
+                                    <Text style={styles.modalText}>Device Name: </Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        value={deviceName}
+                                        onChangeText={setDeviceName}
+                                    />
+                                    {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                                    <TouchableOpacity
+                                        style={isDarkMode ? styles.buttonDark : styles.buttonLight}
+                                        onPress={handleAddDevice}
+                                    >
+                                        <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Add Device</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </TouchableWithoutFeedback>
+                        </View>
+                    </TouchableWithoutFeedback>
+                </Modal>
+                <Header navigation={navigation} />
+                <Alert message={alertMessage} visible={alertVisible} onDismiss={handleDismiss} />
+                <Confirmation
+                    message="Are you sure you want to proceed?"
+                    visible={confirmationVisible}
+                    onConfirm={handleRemove}
+                    onCancel={handleCancel}
+                    onDismiss={handleDismiss}
+                />
+                <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
+                    {user ? (
+                        <View style={styles.content}>
+                            <ThemedText type="title" style={styles.text}>Your Account</ThemedText>
+                            <Text>{'\n'}</Text>
+                            <View style={styles.fieldContainer}>
+                                <ThemedText type="subtitle" style={styles.text}>Email</ThemedText>
                                 <TextInput
-                                    style={styles.input}
-                                    value={deviceName}
-                                    onChangeText={setDeviceName}
+                                    style={styles.emailInput}
+                                    value={email}
+                                    editable={false}
+                                    placeholderTextColor={isDarkMode ? '#999' : '#999'}
                                 />
-                                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-                                <TouchableOpacity
-                                    style={isDarkMode ? styles.buttonDark : styles.buttonLight}
-                                    onPress={handleAddDevice}
-                                >
-                                    <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Add Device</Text>
-                                </TouchableOpacity>
                             </View>
-                        </TouchableWithoutFeedback>
-                    </View>
-                </TouchableWithoutFeedback>
-            </Modal>
-            <Header navigation={navigation} />
-            <Alert message={alertMessage} visible={alertVisible} onDismiss={handleDismiss} />
-            <Confirmation
-                message="Are you sure you want to proceed?"
-                visible={confirmationVisible}
-                onConfirm={handleRemove}
-                onCancel={handleCancel}
-                onDismiss={handleDismiss}
-            />
-            <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-                {user ? (
-                    <View style={styles.content}>
-                        <ThemedText type="title" style={styles.text}>Your Account</ThemedText>
-                        <Text>{'\n'}</Text>
-                        <View style={styles.fieldContainer}>
-                            <ThemedText type="subtitle" style={styles.text}>Email</ThemedText>
-                            <TextInput
-                                style={styles.emailInput}
-                                value={email}
-                                editable={false}
-                                placeholderTextColor={isDarkMode ? '#999' : '#999'}
-                            />
-                        </View>
-                        <View style={styles.fieldContainer}>
-                            <ThemedText type="subtitle" style={styles.text}>Name</ThemedText>
-                            <TextInput
-                                style={isDarkMode ? styles.inputDark : styles.inputLight}
-                                onChangeText={setName}
-                                value={name}
-                                placeholder="Enter your name"
-                                placeholderTextColor={'slategrey'}
-                            />
-                        </View>
-                        <TouchableOpacity
-                            style={isDarkMode ? styles.buttonDark : styles.buttonLight}
-                            onPress={handleSave}
-                        >
-                            <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Save</Text>
-                        </TouchableOpacity>
-                        <Text>{'\n'}</Text>
-                        <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-                            <ThemedText type="subtitle" style={styles.text}>My Devices</ThemedText>
-                            {/* <Text>{'\n'}</Text> */}
-                            <FlatList
-                                data={devices}
-                                keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
-                                renderItem={renderItem}
-                                contentContainerStyle={styles.listContent}
-                            />
+                            <View style={styles.fieldContainer}>
+                                <ThemedText type="subtitle" style={styles.text}>Name</ThemedText>
+                                <TextInput
+                                    style={isDarkMode ? styles.inputDark : styles.inputLight}
+                                    onChangeText={setName}
+                                    value={name}
+                                    placeholder="Enter your name"
+                                    placeholderTextColor={'slategrey'}
+                                />
+                            </View>
                             <TouchableOpacity
-                                style={[
-                                    styles.addDeviceButton,
-                                    (highlightIndex !== -1) && styles.buttonDisabled // Apply disabled style if the button is disabled
-                                ]}
-                                onPress={handleOpen}
-                                disabled={(highlightIndex !== -1)} // Disable the button if needed
+                                style={isDarkMode ? styles.buttonDark : styles.buttonLight}
+                                onPress={handleSave}
                             >
-                                <Text style={styles.addDeviceButtonText}>
-                                    Add Current Device
-                                </Text>
+                                <Text style={isDarkMode ? styles.buttonTextDark : styles.buttonTextLight}>Save</Text>
                             </TouchableOpacity>
+                            <Text>{'\n'}</Text>
+                            <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
+                                <ThemedText type="subtitle" style={styles.text}>My Devices</ThemedText>
+                                {/* <Text>{'\n'}</Text> */}
+                                <FlatList
+                                    data={devices}
+                                    keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
+                                    renderItem={renderItem}
+                                    contentContainerStyle={styles.listContent}
+                                />
+                                <TouchableOpacity
+                                    style={[
+                                        styles.addDeviceButton,
+                                        (highlightIndex !== -1) && styles.buttonDisabled // Apply disabled style if the button is disabled
+                                    ]}
+                                    onPress={handleOpen}
+                                    disabled={(highlightIndex !== -1)} // Disable the button if needed
+                                >
+                                    <Text style={styles.addDeviceButtonText}>
+                                        Add Current Device
+                                    </Text>
+                                </TouchableOpacity>
+                            </ThemedView>
+                            <TouchableOpacity
+                                style={styles.logoutButton}
+                                onPress={handleLogout}
+                            >
+                                <Text style={styles.logoutButtonText}>Click here to logout!</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <ThemedView style={styles.containerCenter}>
+                            <MaterialCommunityIcons name="hand-wave" size={24} color="black" />
+                            <ThemedText type="subtitle" style={styles.textLight}>Hi there! {'\n'}</ThemedText>
+                            <ThemedText type="subtitle" style={styles.textLight}>Welcome! Please log in to access your account and enjoy personalized features.
+                            </ThemedText>
                         </ThemedView>
-                        <TouchableOpacity
-                            style={styles.logoutButton}
-                            onPress={handleLogout}
-                        >
-                            <Text style={styles.logoutButtonText}>Click here to logout!</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    <ThemedView style={styles.containerCenter}>
-                        <MaterialCommunityIcons name="hand-wave" size={24} color="black" />
-                        <ThemedText type="subtitle" style={styles.textLight}>Hi there! {'\n'}</ThemedText>
-                        <ThemedText type="subtitle" style={styles.textLight}>Welcome! Please log in to access your account and enjoy personalized features.
-                        </ThemedText>
-                    </ThemedView>
-                )}
-            </ThemedView >
-        </SafeAreaView >
+                    )}
+                </ThemedView >
+            </SafeAreaView >
+        </ScrollView>
 
     );
 }
 
 const styles = StyleSheet.create({
-    safeAreaLight: {
+    safeArea: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: 18,
-    },
-    safeAreaDark: {
-        flex: 1,
-        backgroundColor: '#fff',
-        paddingTop: 18,
+        paddingTop: Platform.OS === 'web' ? 0 : 18,
     },
     iconsContainer: {
         flexDirection: 'row',

@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
         shadowOffset: { height: 2, width: 2 },
         shadowColor: '#000',
         shadowOpacity: 0.1,
+        gap: 10
     },
     clipboardText: {
         fontSize: 12,
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 16,
         flex: 1,
-        color: '#aaa'
+        color: 'grey'
     },
     copyButton: {
         marginLeft: 10,
