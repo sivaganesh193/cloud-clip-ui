@@ -13,7 +13,7 @@ import { getDeviceId } from '@/service/deviceService';
 import { Shared } from '@/service/models';
 import * as Crypto from 'expo-crypto';
 import { Timestamp } from 'firebase/firestore';
-import { setClipboard } from '@/service/clipboardService';
+import { getSharedLinkURL, handleShare, setClipboard } from '@/service/clipboardService';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 
 export default function SharedLinks() {
@@ -25,56 +25,7 @@ export default function SharedLinks() {
 	const { deviceId, deviceName } = useDeviceDetails();
 
 
-	const getSharedLinkURL = (code: string): string => {
-		const sharedLinkURL = `${getDomain()}/shared/${code}`;
-		console.log(sharedLinkURL);
-		return sharedLinkURL;
-	}
 
-	const handleShare = async (content: string) => {
-		if (content) {
-			try {
-				let clipRef: any;
-				let sharedRef: any;
-				if (user && deviceId) {
-					clipRef = await createClipboardEntry({
-						userId: user.uid,
-						deviceId: deviceId,
-						deviceName: deviceName,
-						content: content
-					});
-					sharedRef = await createSharedLink({
-						userId: user.uid,
-						clipboardId: clipRef,
-						content: content,
-						code: Crypto.randomUUID(), // will change url to smaller code
-					})
-				} else {
-					clipRef = await createClipboardEntry({
-						userId: '',
-						deviceId: '',
-						content: content,
-						deviceName: ''
-					});
-					sharedRef = await createSharedLink({
-						userId: '',
-						clipboardId: clipRef,
-						content: content,
-						code: Crypto.randomUUID(), // will change url to smaller code
-					})
-				}
-				const sharedLinkURL = getSharedLinkURL(sharedRef);
-				await setClipboard(sharedLinkURL);
-				setTextToShare('');
-			}
-			catch (error) {
-				console.error('Error creating shared link: ', error);
-			}
-		}
-		else {
-			window.alert('Please enter text to share'); 
-		}
-	};
 
 	const authContext = useContext(AuthContext); // Get AuthContext
 	if (!authContext) {
@@ -109,23 +60,23 @@ export default function SharedLinks() {
 	};
 
 	useEffect(() => {
-        const initialize = async () => {
-            try {
-                // Only set up the listener if user and deviceId are available
-                if (user && deviceId) {
-                    // Define unsubscribe function
-                    const unsubscribe = listenToSharedLinks(user.uid, setSharedLinks);
+		const initialize = async () => {
+			try {
+				// Only set up the listener if user and deviceId are available
+				if (user && deviceId) {
+					// Define unsubscribe function
+					const unsubscribe = listenToSharedLinks(user.uid, setSharedLinks);
 
-                    // Cleanup the listener on unmount
-                    return () => unsubscribe();
-                }
-            } catch (error) {
-                console.error('Error during initialization:', error);
-            }
-        };
-        // Run the initialize function
-        initialize();
-    }, [user,deviceId]); 
+					// Cleanup the listener on unmount
+					return () => unsubscribe();
+				}
+			} catch (error) {
+				console.error('Error during initialization:', error);
+			}
+		};
+		// Run the initialize function
+		initialize();
+	}, [user, deviceId]);
 
 	return (
 		<ScrollView
@@ -149,7 +100,7 @@ export default function SharedLinks() {
 					/>
 					<TouchableOpacity
 						style={styles.shareButton}
-						onPress={() => handleShare(textToShare)}
+						onPress={() => handleShare(textToShare, user, deviceId, deviceName, setTextToShare)}
 					>
 						<Ionicons name="share-outline" size={24} color="white" />
 						<ThemedText type="default" style={styles.shareButtonText} >

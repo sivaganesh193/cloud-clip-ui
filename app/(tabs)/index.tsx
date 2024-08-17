@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
 	},
 	centerContainer: {
 		backgroundColor: '#fff',
-		padding: 16,
+		padding: Platform.OS === 'web' ? 16 : 5,
 		borderRadius: 16,
 	},
 	container: {
