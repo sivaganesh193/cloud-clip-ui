@@ -10,7 +10,7 @@ import { useNavigation } from 'expo-router';
 import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
-import { createClipboardEntry, fetchClipboardEntries } from '@/service/firebaseService';
+import { createClipboardEntry, fetchClipboardEntries, listenToClipboardEntries } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import Alert from '@/components/Alert';
@@ -47,21 +47,11 @@ export default function Homepage() {
 	const handleSave = (text: string) => {
 		if (user && deviceId) {
 			if (text) {
-				createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text }).then(() => {
-					getClipboardData();
-				});
+				createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text });
 				showAlert("Text saved to clipboard")
 			} else {
 				showAlert("Please enter some text to save!")
 			}
-		}
-	};
-
-	const getClipboardData = async () => {
-		if (user) {
-			fetchClipboardEntries(user.uid)
-				.then((data) => setClipboardEntries(data));
-			console.log(clipboardEntries);
 		}
 	};
 
@@ -73,39 +63,35 @@ export default function Homepage() {
 	useEffect(() => {
 		const initialize = async () => {
 			try {
-				await getClipboardData();
-
-				const clipboardIntervalId = setInterval(() => {
-					getClipboard()
-						.then((text) => {
-							if (text !== dataRef.current) {
-								setData(text);
-								createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text }).then(() => {
-									getClipboardData();
-								});
-							} else {
-
-							}
-						})
-						.catch(() => { });
-				}, 1000);
-
-				const dataIntervalId = setInterval(() => {
-					getClipboardData();
-				}, 5000);
-
-				// Cleanup function for intervals when component unmounts
-				return () => {
-					clearInterval(clipboardIntervalId);
-					clearInterval(dataIntervalId);
-				};
+				if (user && deviceId) {
+					// Define unsubscribe function
+					const unsubscribe = listenToClipboardEntries(user.uid, setClipboardEntries);
+					// Cleanup the listener on unmount
+					return () => unsubscribe();
+				}
+				if (user) {
+					const clipboardIntervalId = setInterval(() => {
+						getClipboard()
+							.then((text) => {
+								if (text !== dataRef.current) {
+									setData(text);
+									createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text });
+								}
+							})
+							.catch(() => { });
+					}, 1000);
+					// Cleanup function for intervals when component unmounts
+					return () => {
+						clearInterval(clipboardIntervalId);
+					};
+				}
 			} catch (error) {
 				console.error('Error during initialization:', error);
 			}
 		};
-
 		initialize();
-	}, [user]);
+	}, [user,deviceId]);
+	
 	return (
 		<>
 			<Alert message={alertMessage} visible={alertVisible} onDismiss={undefined} />
@@ -169,7 +155,7 @@ export default function Homepage() {
 									<View style={styles.headerWithButton}>
 										<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries</ThemedText>
 									</View>
-									<ClipboardScreen clipboardEntries={clipboardEntries} refreshData={getClipboardData} showAlert={showAlert} />
+									<ClipboardScreen clipboardEntries={clipboardEntries} showAlert={showAlert} />
 								</ThemedView>
 							</>
 						)}

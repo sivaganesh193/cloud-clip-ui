@@ -11,17 +11,15 @@ import { AuthContext } from '@/auth/AuthContext';
 
 interface ClipboardScreenProps {
     clipboardEntries: Clipboard[];
-    refreshData: () => void; // Update the type to be a function that returns void
     showAlert: (message: string) => void
 }
 
-const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, refreshData, showAlert }) => {
+const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, showAlert }) => {
 
     // Function to handle copy action
     const handleDelete = (id: string) => {
         deleteClipboardEntry(id).then(async () => {
             try {
-                refreshData();
                 showAlert('Deleted clipboard entry');
             } catch (error) {
                 showAlert('Failed to delete clipboard entry');
