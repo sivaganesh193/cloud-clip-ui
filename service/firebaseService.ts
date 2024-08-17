@@ -55,7 +55,6 @@ export const fetchUser = async (userId: string): Promise<User | null> => {
         const docSnap = await getDoc(userRef);
         if (docSnap.exists()) {
             const userData = docSnap.data() as User;
-            console.log('User data:', userData);
             return userData;
         } else {
             console.log('No such user!');
@@ -94,6 +93,36 @@ export const fetchDevices = async (userId: string | null): Promise<Device[]> => 
 };
 
 /**
+ * Sets up a real-time listener for devices based on the user ID.
+ * 
+ * @param userId - The ID of the user whose devices are to be listened to.
+ * @param onUpdate - A callback function that is called with the updated devices.
+ * @returns A function to unsubscribe from the real-time updates.
+ */
+export const listenToDevices = (userId: string, onUpdate: (devices: Device[]) => void) => {
+    try {
+        const devicesRef = collection(db, 'devices');
+        const q = query(devicesRef, where('userId', '==', userId));
+
+        // Set up a real-time listener
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const devicesList: Device[] = querySnapshot.docs.map(doc => ({
+                ...doc.data() as Device, // Spread the existing device data
+                id: doc.id // Add the doc ID as deviceId
+            }));
+            console.log('Refetched Devices');
+            onUpdate(devicesList); // Call the callback with the updated devices
+        });
+
+        // Return the unsubscribe function so the caller can stop listening if needed
+        return unsubscribe;
+    } catch (error) {
+        console.error('Error setting up real-time listener for devices: ', error);
+        throw error;
+    }
+};
+
+/**
  * Creates a new device document in the Firestore devices collection.
  * 
  * @param device - The device object to be added to the collection.
@@ -107,7 +136,6 @@ export const createDevice = async (device: Device): Promise<void> => {
             updatedAt: Timestamp.now() // Corrected field name to `updatedAt`
         });
         console.log(`Device with ID ${docRef.id} created successfully`);
-        console.log(docRef);
     } catch (error) {
         console.error('Error creating device: ', error);
     }
@@ -155,41 +183,13 @@ export const deleteDevice = async (id: string): Promise<void> => {
  */
 export const fetchClipboardEntries = async (userId: string): Promise<Clipboard[]> => {
     try {
-        // Reference to the clipboards collection
         const clipboardsRef = collection(db, 'clipboards');
-
-        // Query to filter clipboard entries based on the user ID
         const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
-
-        // Fetch clipboard documents that match the query
         const clipboardQuerySnapshot = await getDocs(clipboardQuery);
-
-        // Map through clipboard documents and extract clipboard data
-        const clipboardEntries: Clipboard[] = [];
-
-        for (const doc of clipboardQuerySnapshot.docs) {
-            const clipboardData = doc.data() as Clipboard;
-            clipboardData.id = doc.id;
-
-            // Fetch the device information based on deviceId
-            const devicesRef = collection(db, 'devices');
-            const deviceQuery = query(devicesRef, where('deviceId', '==', clipboardData.deviceId));
-            const deviceQuerySnapshot = await getDocs(deviceQuery);
-
-            const deviceData = deviceQuerySnapshot.docs.length > 0
-                ? deviceQuerySnapshot.docs[0].data() as Device
-                : null;
-
-            // Merge the clipboard data with device information if available
-            clipboardEntries.push({
-                ...clipboardData,
-                deviceName: deviceData ? deviceData.deviceName : 'Unknown Device',
-            });
-        }
-
-        // Log the fetched clipboard entries with device information
-        console.log('Clipboard Entries with Device Info:', clipboardEntries);
-
+        const clipboardEntries: Clipboard[] = clipboardQuerySnapshot.docs.map(doc => ({
+            ...doc.data() as Clipboard, // Spread the existing device data
+            id: doc.id // Add the doc ID as deviceId
+        }));
         return clipboardEntries;
     } catch (error) {
         console.error('Error fetching clipboard entries: ', error);
@@ -222,6 +222,36 @@ export const createClipboardEntry = async (clipboard: Clipboard): Promise<string
 };
 
 /**
+ * Sets up a real-time listener for clipboard entries for a given userId.
+ * 
+ * @param userId - The ID of the user whose clipboard entries are to be listened to.
+ * @param onUpdate - A callback function that is called with the updated clipboard entries.
+ * @returns A function to unsubscribe from the real-time updates.
+ */
+export const listenToClipboardEntries = (userId: string, onUpdate: (clipboards: Clipboard[]) => void) => {
+    try {
+        const clipboardsRef = collection(db, 'clipboards');
+        const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+
+        // Set up a real-time listener
+        const unsubscribe = onSnapshot(clipboardQuery, (querySnapshot) => {
+            const clipboardEntries: Clipboard[] = querySnapshot.docs.map(doc => ({
+                ...doc.data() as Clipboard, // Spread the existing clipboard data
+                id: doc.id // Add the doc ID
+            }));
+            console.log('Refetched Clipboard Entries');
+            onUpdate(clipboardEntries); // Call the callback with the updated clipboard entries
+        });
+
+        // Return the unsubscribe function so the caller can stop listening if needed
+        return unsubscribe;
+    } catch (error) {
+        console.error('Error setting up real-time listener for clipboard entries: ', error);
+        throw error;
+    }
+};
+
+/**
  * Deletes a clipboard document from the Firestore clipboards collection.
  * 
  * @param clipboardId - The ID of the clipboard document to be deleted.
@@ -233,28 +263,6 @@ export const deleteClipboardEntry = async (clipboardId: string): Promise<void> =
         console.log(`Clipboard entry with ID ${clipboardId} deleted successfully`);
     } catch (error) {
         console.error('Error deleting clipboard entry: ', error);
-    }
-};
-
-/**
- * Fetches all shared links along with their associated clipboard content for a given userId.
- * 
- * @param userId - The ID of the user whose shared links are to be fetched.
- * @returns An array of objects containing shared link details and their associated clipboard content.
- */
-export const fetchSharedLinks = async (userId: string): Promise<Shared[]> => {
-    try {
-        const sharedRef = collection(db, 'sharedLinks');
-        const q = query(sharedRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const sharedLinks: Shared[] = querySnapshot.docs.map(doc => ({
-            ...doc.data() as Shared, // Spread the existing device data
-            id: doc.id // Add the doc ID as deviceId
-        }));
-        return sharedLinks;
-    } catch (error) {
-        console.error('Error fetching shared links with clipboard content: ', error);
-        throw error;
     }
 };
 

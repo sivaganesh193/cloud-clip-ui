@@ -1,28 +1,29 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Alert, Platform, Linking, ScrollView } from 'react-native';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
 import { router, useNavigation } from 'expo-router';
-import { createClipboardEntry, createSharedLink, deleteSharedLink, fetchSharedLinks, listenToSharedLinks } from '@/service/firebaseService';
+import { createClipboardEntry, createSharedLink, deleteSharedLink, listenToSharedLinks } from '@/service/firebaseService';
 import { AuthContext } from '@/auth/AuthContext';
 import { getDomain, truncateContent } from '@/service/util';
 import { getDeviceId } from '@/service/deviceService';
 import { Shared } from '@/service/models';
-import * as Clipboard from 'expo-clipboard';
 import * as Crypto from 'expo-crypto';
 import { Timestamp } from 'firebase/firestore';
 import { setClipboard } from '@/service/clipboardService';
+import useDeviceDetails from '@/hook/useDeviceDetails';
 
 export default function SharedLinks() {
 	const colorScheme = useColorScheme();
 	const isDarkMode = colorScheme === 'dark';
 	const navigation = useNavigation();
 	const [textToShare, setTextToShare] = useState("");
-	const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 	const [sharedLinks, setSharedLinks] = useState<Shared[]>([]); // Define the type for the state
+	const { deviceId, deviceName } = useDeviceDetails();
+
 
 	const getSharedLinkURL = (code: string): string => {
 		const sharedLinkURL = `${getDomain()}/shared/${code}`;
@@ -33,10 +34,11 @@ export default function SharedLinks() {
 	const handleShare = async (content: string) => {
 		if (content) {
 			try {
-				if (user && currentDeviceId) {
+				if (user && deviceId) {
 					const clipRef = await createClipboardEntry({
 						userId: user.uid,
-						deviceId: currentDeviceId,
+						deviceId: deviceId,
+						deviceName: deviceName,
 						content: content
 					});
 					const sharedRef = await createSharedLink({
@@ -95,10 +97,6 @@ export default function SharedLinks() {
 	useEffect(() => {
         const initialize = async () => {
             try {
-                // Fetch device ID and user details concurrently
-                const deviceId = await getDeviceId();
-                setCurrentDeviceId(deviceId);
-
                 // Only set up the listener if user and deviceId are available
                 if (user && deviceId) {
                     // Define unsubscribe function
@@ -113,7 +111,7 @@ export default function SharedLinks() {
         };
         // Run the initialize function
         initialize();
-    }, [user]); 
+    }, [user,deviceId]); 
 
 	return (
 		<ScrollView
