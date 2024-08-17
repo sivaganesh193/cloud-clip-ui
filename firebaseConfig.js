@@ -14,6 +14,15 @@ const firebaseConfig = {
     appId: "1:233163298991:web:fa8764c35933ca02409c5a"
 };
 
+const firebaseAltConfig = {
+    apiKey: "AIzaSyAltRIADhO7wYWI2F-niM9iahWoFMzZ8ZY",
+    authDomain: "backup-cloudclip.firebaseapp.com",
+    projectId: "backup-cloudclip",
+    storageBucket: "backup-cloudclip.appspot.com",
+    messagingSenderId: "213682652022",
+    appId: "1:213682652022:web:5a8901876336cd5db93057"
+  };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 

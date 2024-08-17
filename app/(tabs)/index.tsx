@@ -76,9 +76,9 @@ export default function Homepage() {
 				const clipboardIntervalId = setInterval(() => {
 					getClipboard()
 						.then((text) => {
-							// setData(text)
+							setData(text)
 						})
-						.catch((err) => console.log(err));
+						.catch(() => {});
 				}, 1000);
 
 				// Start the second interval to fetch clipboard entries every 5 seconds

@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
 import { router, useNavigation } from 'expo-router';
-import { createClipboardEntry, createSharedLink, deleteSharedLink, fetchSharedLinks } from '@/service/firebaseService';
+import { createClipboardEntry, createSharedLink, deleteSharedLink, fetchSharedLinks, listenToSharedLinks } from '@/service/firebaseService';
 import { AuthContext } from '@/auth/AuthContext';
 import { getDomain, truncateContent } from '@/service/util';
 import { getDeviceId } from '@/service/deviceService';
@@ -42,6 +42,7 @@ export default function SharedLinks() {
 					const sharedRef = await createSharedLink({
 						userId: user.uid,
 						clipboardId: clipRef,
+						content: content,
 						code: Crypto.randomUUID(), // will change url to smaller code
 					})
 					const linkCode = clipRef;
@@ -66,15 +67,8 @@ export default function SharedLinks() {
 	}
 	const { user } = authContext; // Use AuthContext to get the user
 
-	const fetchData = async () => {
-		if (user && currentDeviceId) {
-			const shared = await fetchSharedLinks(user.uid);
-			setSharedLinks(shared);
-		}
-	};
-
 	const handleRemove = (id: string) => {
-		deleteSharedLink(id).then(() => fetchData());
+		deleteSharedLink(id);
 	};
 
 	const handleShareLink = (code: string) => {
@@ -99,30 +93,27 @@ export default function SharedLinks() {
 	};
 
 	useEffect(() => {
-		const initialize = async () => {
-			try {
-				// Fetch device ID and user details concurrently
-				const deviceId = await getDeviceId();
-				setCurrentDeviceId(deviceId);
+        const initialize = async () => {
+            try {
+                // Fetch device ID and user details concurrently
+                const deviceId = await getDeviceId();
+                setCurrentDeviceId(deviceId);
 
-				if (deviceId) {
-					fetchData();
-				}
+                // Only set up the listener if user and deviceId are available
+                if (user && deviceId) {
+                    // Define unsubscribe function
+                    const unsubscribe = listenToSharedLinks(user.uid, setSharedLinks);
 
-				// Start the interval only after the currentDeviceId is set
-				const intervalId = setInterval(() => {
-					fetchData();
-				}, 2147483647);
-
-				// Cleanup the interval on unmount
-				return () => clearInterval(intervalId);
-			} catch (error) {
-				console.error('Error during initialization:', error);
-			}
-		};
-
-		initialize();
-	}, [user, currentDeviceId]);
+                    // Cleanup the listener on unmount
+                    return () => unsubscribe();
+                }
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
+        };
+        // Run the initialize function
+        initialize();
+    }, [user]); 
 
 	return (
 		<ScrollView
@@ -165,7 +156,7 @@ export default function SharedLinks() {
 								<TouchableOpacity onPress={() => router.push(`/shared/${item.id || ''}`)}>
 									<View style={styles.itemContainerLight}>
 										<View style={styles.textContainer}>
-											<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{truncateContent(item.clipboardContent || "")}</Text>
+											<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{truncateContent(item.content || "")}</Text>
 											<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {calculateTimeLeft(item.expiryAt || null)}</Text>
 										</View>
 										<View style={styles.buttonContainer}>

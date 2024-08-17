@@ -29,7 +29,7 @@ export const getClipboard = async (): Promise<string> => {
         const text = await Clipboard.getStringAsync();
         return text;
     } catch (error) {
-        console.error('Error retrieving text from clipboard:', error);
+        // console.error('Error retrieving text from clipboard:', error);
         throw error; // Optionally, rethrow the error if needed
     }
 };

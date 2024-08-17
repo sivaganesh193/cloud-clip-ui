@@ -1,5 +1,5 @@
 import { db } from '../firebaseConfig'; // Import your Firestore instance
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { Clipboard, Device, Shared, User } from './models'; // Import the User interface
 
 /**
@@ -244,22 +244,43 @@ export const fetchSharedLinks = async (userId: string): Promise<Shared[]> => {
         const sharedRef = collection(db, 'sharedLinks');
         const q = query(sharedRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        const sharedLinks: Shared[] = [];
-        for (const link of querySnapshot.docs) {
-            const sharedLink = { id: link.id, ...link.data() } as Shared;
-            // Fetch clipboard content based on clipboardId
-            const clipboardDocRef = doc(db, 'clipboards', sharedLink.clipboardId);
-            const clipboardDoc = await getDoc(clipboardDocRef);
-            const clipboardData = clipboardDoc.data() as Clipboard;
-            console.log(clipboardData);
-            sharedLinks.push({
-                ...sharedLink,
-                clipboardContent: clipboardData.content || String(null)
-            })
-        }
+        const sharedLinks: Shared[] = querySnapshot.docs.map(doc => ({
+            ...doc.data() as Shared, // Spread the existing device data
+            id: doc.id // Add the doc ID as deviceId
+        }));
         return sharedLinks;
     } catch (error) {
         console.error('Error fetching shared links with clipboard content: ', error);
+        throw error;
+    }
+};
+
+/**
+ * Sets up a real-time listener for shared links along with their associated clipboard content for a given userId.
+ * 
+ * @param userId - The ID of the user whose shared links are to be listened to.
+ * @param onUpdate - A callback function that is called with the updated shared links.
+ * @returns A function to unsubscribe from the real-time updates.
+ */
+export const listenToSharedLinks = (userId: string, onUpdate: (sharedLinks: Shared[]) => void) => {
+    try {
+        const sharedRef = collection(db, 'sharedLinks');
+        const q = query(sharedRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+
+        // Set up a real-time listener
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const sharedLinks: Shared[] = querySnapshot.docs.map(doc => ({
+                ...doc.data() as Shared, // Spread the existing data
+                id: doc.id // Add the doc ID
+            }));
+            console.log('refetched',querySnapshot.docs);
+            onUpdate(sharedLinks); // Call the callback with the updated shared links
+        });
+
+        // Return the unsubscribe function so the caller can stop listening if needed
+        return unsubscribe;
+    } catch (error) {
+        console.error('Error setting up real-time listener for shared links: ', error);
         throw error;
     }
 };

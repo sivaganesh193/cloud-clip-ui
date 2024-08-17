@@ -35,7 +35,7 @@ export interface Clipboard {
 export interface Shared {
     id?: string;
     clipboardId: string;
-    clipboardContent?: string;
+    content: string;
     userId: string;
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
