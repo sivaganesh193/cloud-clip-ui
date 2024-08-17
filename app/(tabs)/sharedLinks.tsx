@@ -16,6 +16,7 @@ import { Timestamp } from 'firebase/firestore';
 import { getSharedLinkURL, handleShare, setClipboard } from '@/service/clipboardService';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import NoItemsComponent from '@/components/NoItems';
+import Alert from '@/components/Alert';
 
 export default function SharedLinks() {
 	const colorScheme = useColorScheme();
@@ -86,75 +87,78 @@ export default function SharedLinks() {
 	}, [user, deviceId]);
 
 	return (
-		<ScrollView
-			contentContainerStyle={{ flexGrow: 1 }}
-			showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
-			horizontal={false} // Ensures horizontal scrolling is disabled
-		>
-			<SafeAreaView style={styles.safeArea}>
-				<Header navigation={navigation} />
-				<ThemedView style={styles.containerDark}>
-					<ThemedText type="title" style={styles.heading}>
-						Paste your text here and click on Share to easily share text with friends!
-					</ThemedText>
-
-					<TextInput
-						style={isDarkMode ? styles.inputDark : styles.inputLight}
-						placeholder="Enter text to share"
-						placeholderTextColor={isDarkMode ? '#000' : '#000'}
-						value={textToShare}
-						onChangeText={(text) => setTextToShare(text)}
-					/>
-					<TouchableOpacity
-						style={styles.shareButton}
-						onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
-					>
-						<Ionicons name="share-outline" size={24} color="white" />
-						<ThemedText type="default" style={styles.shareButtonText} >
-							Share
+		<>
+			<Alert message={alertMessage} visible={alertVisible} onDismiss={undefined} />
+			<ScrollView
+				contentContainerStyle={{ flexGrow: 1 }}
+				showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
+				horizontal={false} // Ensures horizontal scrolling is disabled
+			>
+				<SafeAreaView style={styles.safeArea}>
+					<Header navigation={navigation} />
+					<ThemedView style={styles.containerDark}>
+						<ThemedText type="title" style={styles.heading}>
+							Paste your text here and click on Share to easily share text with friends!
 						</ThemedText>
-					</TouchableOpacity>
-				</ThemedView>
-				{user && (
-					<ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
-						<ThemedText type="subtitle" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
-						<Text>{'\n'}</Text>
-						<View style={styles.flatListContainer}>
-							{sharedLinks.length > 0 ? (
-								<FlatList
-									data={sharedLinks}
-									keyExtractor={(item) => item.id || Crypto.randomUUID()}
-									renderItem={({ item }) => (
-										<TouchableOpacity onPress={() => router.push(`/shared/${item.id || ''}`)}>
-											<View style={styles.itemContainerLight}>
-												<View style={styles.textContainer}>
-													<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
-														{truncateContent(item.content || "")}
-													</Text>
-													<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>
-														Expires in: {calculateTimeLeft(item.expiryAt || null)}
-													</Text>
-												</View>
-												<View style={styles.buttonContainer}>
-													<TouchableOpacity style={styles.button} onPress={() => handleRemove(item.id || '')}>
-														<Ionicons name="trash-outline" size={24} color={'black'} />
-													</TouchableOpacity>
-													<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
-														<Ionicons name="share-social-outline" size={24} color={'black'} />
-													</TouchableOpacity>
-												</View>
-											</View>
-										</TouchableOpacity>
-									)}
-									contentContainerStyle={styles.listContent}
-								/>) : (
-								<NoItemsComponent></NoItemsComponent>
-							)}
-						</View>
+
+						<TextInput
+							style={isDarkMode ? styles.inputDark : styles.inputLight}
+							placeholder="Enter text to share"
+							placeholderTextColor={isDarkMode ? '#000' : '#000'}
+							value={textToShare}
+							onChangeText={(text) => setTextToShare(text)}
+						/>
+						<TouchableOpacity
+							style={styles.shareButton}
+							onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
+						>
+							<Ionicons name="share-outline" size={24} color="white" />
+							<ThemedText type="default" style={styles.shareButtonText} >
+								Share
+							</ThemedText>
+						</TouchableOpacity>
 					</ThemedView>
-				)}
-			</SafeAreaView>
-		</ScrollView>
+					{user && (
+						<ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
+							<ThemedText type="subtitle" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
+							<Text>{'\n'}</Text>
+							<View style={styles.flatListContainer}>
+								{sharedLinks.length > 0 ? (
+									<FlatList
+										data={sharedLinks}
+										keyExtractor={(item) => item.id || Crypto.randomUUID()}
+										renderItem={({ item }) => (
+											<TouchableOpacity onPress={() => router.push(`/shared/${item.id || ''}`)}>
+												<View style={styles.itemContainerLight}>
+													<View style={styles.textContainer}>
+														<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
+															{truncateContent(item.content || "")}
+														</Text>
+														<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>
+															Expires in: {calculateTimeLeft(item.expiryAt || null)}
+														</Text>
+													</View>
+													<View style={styles.buttonContainer}>
+														<TouchableOpacity style={styles.button} onPress={() => handleRemove(item.id || '')}>
+															<Ionicons name="trash-outline" size={24} color={'black'} />
+														</TouchableOpacity>
+														<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
+															<Ionicons name="share-social-outline" size={24} color={'black'} />
+														</TouchableOpacity>
+													</View>
+												</View>
+											</TouchableOpacity>
+										)}
+										contentContainerStyle={styles.listContent}
+									/>) : (
+									<NoItemsComponent></NoItemsComponent>
+								)}
+							</View>
+						</ThemedView>
+					)}
+				</SafeAreaView>
+			</ScrollView>
+		</>
 	);
 }
 

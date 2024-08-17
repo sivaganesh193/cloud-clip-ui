@@ -102,6 +102,6 @@ export const handleShare = async (content: string, user: any, deviceId: string, 
         }
     }
     else {
-        window.alert('Please enter text to share');
+        showAlert("Please enter text to share");
     }
 };
