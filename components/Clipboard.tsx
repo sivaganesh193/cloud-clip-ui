@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { setClipboard } from '@/service/clipboardService';
 import { Clipboard } from '@/service/models';
 import { deleteClipboardEntry } from '@/service/firebaseService';
+import { truncateContent } from '@/service/util';
 
 interface ClipboardScreenProps {
     clipboardEntries: Clipboard[];
@@ -20,16 +21,6 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, ref
             refreshData();
         });
     };
-
-    const truncateContent = (content: string, startLength = 15, endLength = 15) => {
-        if (content.length <= startLength + endLength) {
-            return content; // No need to truncate if content is short enough
-        }
-        const start = content.slice(0, startLength);
-        const end = content.slice(-endLength);
-        return `${start} _ ${end}`;
-    };
-    
 
     return (
         <ThemedView style={styles.container}>

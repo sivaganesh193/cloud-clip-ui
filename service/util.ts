@@ -9,3 +9,12 @@ export const getDomain = () => {
         return Linking.getInitialURL() // Returns the domain in a React Native environment
     }
 };
+
+export const truncateContent = (content: string, startLength = 15, endLength = 15) => {
+    if (content.length <= startLength + endLength) {
+        return content; // No need to truncate if content is short enough
+    }
+    const start = content.slice(0, startLength);
+    const end = content.slice(-endLength);
+    return `${start} _ ${end}`;
+};

@@ -306,21 +306,24 @@ export const deleteSharedLink = async (sharedId: string): Promise<void> => {
     }
 };
 
-export const fetchSharedLink = async (clipboardId: any): Promise<Shared | null> => {
-    // try {
-    //     const sharedRef = doc(db, 'clipboards',clipboardId.id);
-    //     const querySnapshot = await getDoc(sharedRef);
-    //     if (!querySnapshot) {
-    //         console.log("No matching documents found.");
-    //         return null;
-    //     }
+export const fetchSharedLink = async (sharedId: any): Promise<Clipboard | null> => {
+    try {
+        const sharedRef = doc(db, 'sharedLinks', sharedId.id);
+        const documentSnapshot = await getDoc(sharedRef);
 
-    
-    //     console.log("Fetched shared link:", sharedLink);
-    //     return sharedLink;
-    // } catch (error) {
-    //     console.error('Error fetching shared link with clipboard content: ', error);
-    //     throw error;
-    // }
-    return null;
+        if (!documentSnapshot.exists()) {
+            console.log("No matching documents found.");
+            return null;
+        }
+
+        const clipboardData = documentSnapshot.data() as Shared;
+        const dataRef = doc(db, 'clipboards', clipboardData.clipboardId);
+        const dataSnapshot = (await getDoc(dataRef)).data() as Clipboard;
+
+        console.log("Fetched shared link:", dataSnapshot);
+        return dataSnapshot;
+    } catch (error) {
+        console.error('Error fetching shared link with clipboard content: ', error);
+        throw error;
+    }
 };

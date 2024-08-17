@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { SafeAreaView, Text, StyleSheet, Platform, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, Text, StyleSheet, Platform, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import { ThemedText } from '@/components/ThemedText';
@@ -24,8 +24,7 @@ export default function Page() {
         try {
           const sharedLink = await fetchSharedLink(id);
           if (sharedLink) {
-            console.log(sharedLink);
-
+            setData(sharedLink.content || "");
           }
 
         } catch (error) {
@@ -49,15 +48,17 @@ export default function Page() {
             )}
           </TouchableOpacity>
         </View>
-        <View style={styles.textBox}>
-          <TextInput
-            style={[styles.text, styles.textInput]}
-            value={data}
-            onChangeText={setData}
-            multiline={true}
-            editable={true}
-          />
-        </View>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.textBox}>
+            <TextInput
+              style={[styles.text, styles.textInput]}
+              value={data}
+              onChangeText={setData}
+              multiline={true}
+              editable={false}
+            />
+          </View>
+        </ScrollView>
       </ThemedView>
     </SafeAreaView>);
 
@@ -70,11 +71,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingTop: 18,
   },
+  scrollContainer: {
+    
+  },
   container: {
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    flex: 1
   },
   headerWithButton: {
     flexDirection: 'row',
@@ -99,7 +104,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,         // Thickness of the border
     borderColor: '#000',    // Color of the border
-    borderRadius: 5         // Optional: Rounds the corners of the border
+    borderRadius: 0         // Optional: Rounds the corners of the border
   },
   textInput: {
     minHeight: 180, // Ensures a minimum height but allows for expansion

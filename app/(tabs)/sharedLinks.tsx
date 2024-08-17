@@ -5,10 +5,10 @@ import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
-import { useNavigation } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { createClipboardEntry, createSharedLink, deleteSharedLink, fetchSharedLinks } from '@/service/firebaseService';
 import { AuthContext } from '@/auth/AuthContext';
-import { getDomain } from '@/service/util';
+import { getDomain, truncateContent } from '@/service/util';
 import { getDeviceId } from '@/service/deviceService';
 import { Shared } from '@/service/models';
 import * as Clipboard from 'expo-clipboard';
@@ -24,7 +24,7 @@ export default function SharedLinks() {
 	const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 	const [sharedLinks, setSharedLinks] = useState<Shared[]>([]); // Define the type for the state
 
-	const getSharedLinkURL = (code: string) : string =>  {
+	const getSharedLinkURL = (code: string): string => {
 		const sharedLinkURL = `${getDomain()}/shared/${code}`;
 		console.log(sharedLinkURL);
 		return sharedLinkURL;
@@ -49,7 +49,7 @@ export default function SharedLinks() {
 					await setClipboard(sharedLinkURL);
 					setTextToShare('');
 				}
-	
+
 			} catch (error) {
 				console.error('Error creating shared link: ', error);
 			}
@@ -81,10 +81,10 @@ export default function SharedLinks() {
 		const url = getSharedLinkURL(code);
 		console.log(url);
 	};
-	
+
 
 	const calculateTimeLeft = (expiryAt: Timestamp | null): string => {
-		if(!expiryAt){
+		if (!expiryAt) {
 			return '';
 		}
 		const now = Date.now(); // Current time in milliseconds
@@ -112,7 +112,7 @@ export default function SharedLinks() {
 				// Start the interval only after the currentDeviceId is set
 				const intervalId = setInterval(() => {
 					fetchData();
-				}, 5000);
+				}, 24000000);
 
 				// Cleanup the interval on unmount
 				return () => clearInterval(intervalId);
@@ -157,20 +157,22 @@ export default function SharedLinks() {
 						data={sharedLinks}
 						keyExtractor={(item) => item.id || Crypto.randomUUID()}
 						renderItem={({ item }) => (
-							<View style={isDarkMode ? styles.itemContainerLight : styles.itemContainerLight}>
-								<View>
-									<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{item.clipboardId} Content: {item.clipboardContent}</Text>
-									<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {calculateTimeLeft(item.expiryAt || null)}</Text>
+							<TouchableOpacity onPress={() => router.push(`/shared/${item.id || ''}`)}>
+								<View style={isDarkMode ? styles.itemContainerLight : styles.itemContainerLight}>
+									<View>
+										<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>{truncateContent(item.clipboardContent || "")}</Text>
+										<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>Expires in: {calculateTimeLeft(item.expiryAt || null)}</Text>
+									</View>
+									<View style={styles.buttonContainer}>
+										<TouchableOpacity style={styles.button} onPress={() => handleRemove(item.id || '')}>
+											<Ionicons name="trash-outline" size={24} color={'black'} />
+										</TouchableOpacity>
+										<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
+											<Ionicons name="share-social-outline" size={24} color={'black'} />
+										</TouchableOpacity>
+									</View>
 								</View>
-								<View style={styles.buttonContainer}>
-									<TouchableOpacity style={styles.button} onPress={() => handleRemove(item.id || '')}>
-										<Ionicons name="trash-outline" size={24} color={'black'} />
-									</TouchableOpacity>
-									<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
-										<Ionicons name="share-social-outline" size={24} color={'black'} />
-									</TouchableOpacity>
-								</View>
-							</View>
+							</TouchableOpacity>
 						)}
 						contentContainerStyle={styles.listContent}
 					/>
@@ -207,6 +209,7 @@ const styles = StyleSheet.create({
 		paddingBottom: 16,
 	},
 	itemContainerLight: {
+		cursor: Platform.OS === 'web' ? 'pointer' : 'auto',
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',

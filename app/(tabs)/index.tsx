@@ -19,7 +19,7 @@ export default function Homepage() {
 	const isDarkMode = colorScheme === 'dark';
 
 	const [data, setData] = useState("");
-    const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
+	const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 
 	const authContext = useContext(AuthContext); // Get AuthContext
@@ -35,8 +35,8 @@ export default function Homepage() {
 	};
 
 	const handleSave = (text: string) => {
-		if(user && currentDeviceId){
-			createClipboardEntry({userId: user.uid, deviceId: currentDeviceId, content: text}).then(() => {
+		if (user && currentDeviceId) {
+			createClipboardEntry({ userId: user.uid, deviceId: currentDeviceId, content: text }).then(() => {
 				getClipboardData();
 			});
 		}
@@ -45,17 +45,17 @@ export default function Homepage() {
 	const getDeviceDetails = async () => {
 		// console.log(user,currentDeviceId);
 		if (user && !currentDeviceId) {
-            const deviceId = await getDeviceId();
-			if(deviceId){
+			const deviceId = await getDeviceId();
+			if (deviceId) {
 				const devices = await fetchDevices(user.uid);
 				devices.forEach((device) => {
-					if(device.deviceId?.includes(deviceId)){
+					if (device.deviceId?.includes(deviceId)) {
 						setDeviceId(device.deviceId);
 						setCurrentDeviceId(device.deviceId)
 					}
 				})
 			}
-        }
+		}
 	};
 
 	const getClipboardData = async () => {
@@ -71,7 +71,7 @@ export default function Homepage() {
 			try {
 				// Fetch clipboard data immediately
 				await getClipboardData();
-	
+
 				// Start the first interval to get clipboard text every second
 				const clipboardIntervalId = setInterval(() => {
 					getClipboard()
@@ -79,13 +79,13 @@ export default function Homepage() {
 							// setData(text)
 						})
 						.catch((err) => console.log(err));
-				}, 1000);
-	
+				}, 2400000);
+
 				// Start the second interval to fetch clipboard entries every 5 seconds
 				const dataIntervalId = setInterval(() => {
 					getClipboardData();
-				}, 5000);
-	
+				}, 2400000);
+
 				// Cleanup both intervals on unmount
 				return () => {
 					clearInterval(clipboardIntervalId);
@@ -95,7 +95,7 @@ export default function Homepage() {
 				console.error('Error during initialization:', error);
 			}
 		};
-	
+
 		initialize();
 	}, [user]);
 
@@ -110,7 +110,7 @@ export default function Homepage() {
 						<ThemedView style={styles.container}>
 							<View style={styles.headerWithButton}>
 								<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
-									<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
+								<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
 									<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
 									{Platform.OS === 'web' && (
 										<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
@@ -137,7 +137,7 @@ export default function Homepage() {
 							<View style={styles.headerWithButton}>
 								<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries</ThemedText>
 							</View>
-							<ClipboardScreen clipboardEntries={clipboardEntries} refreshData={getClipboardData}/>
+							<ClipboardScreen clipboardEntries={clipboardEntries} refreshData={getClipboardData} />
 						</ThemedView>
 					</>
 				)}
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 		borderWidth: 1,         // Thickness of the border
 		borderColor: '#000',    // Color of the border
-		borderRadius: 5         // Optional: Rounds the corners of the border
+		borderRadius: 0         // Optional: Rounds the corners of the border
 	},
 	headerWithButton: {
 		flexDirection: 'row',
@@ -275,8 +275,8 @@ const styles = StyleSheet.create({
 	},
 	textInput: {
 		minHeight: 180,
-		flex: 1, 
-		textAlignVertical: 'top', 
-		padding: 10, 
+		flex: 1,
+		textAlignVertical: 'top',
+		padding: 10,
 	},
 });
