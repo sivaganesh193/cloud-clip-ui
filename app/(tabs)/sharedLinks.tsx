@@ -112,7 +112,7 @@ export default function SharedLinks() {
 				// Start the interval only after the currentDeviceId is set
 				const intervalId = setInterval(() => {
 					fetchData();
-				}, 24000000);
+				}, 2147483647);
 
 				// Cleanup the interval on unmount
 				return () => clearInterval(intervalId);

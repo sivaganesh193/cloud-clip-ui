@@ -84,7 +84,7 @@ export default function Account() {
 
                 const intervalId = setInterval(() => {
                     fetchData();
-                }, 240000000);
+                }, 2147483647);
 
                 return () => clearInterval(intervalId);
             } catch (error) {
