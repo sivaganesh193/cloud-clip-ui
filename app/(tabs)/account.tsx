@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, Flat
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { AuthContext } from '@/auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createDevice, deleteDevice, fetchUser, listenToDevices, updateDevice, updateUser } from '@/service/firebaseService';
 import { getDeviceOS, removeDeviceId, setDeviceId } from '@/service/deviceService';
@@ -27,7 +27,7 @@ export default function Account() {
     const [highlightIndex, setHighlightIndex] = useState(-1);
     const [formDeviceName, setFormDeviceName] = useState('');
 
-    const authContext = useContext(AuthContext); // Get AuthContext
+    const authContext = useAuth();
     if (!authContext) {
         throw new Error("AuthContext must be used within an AuthProvider");
     }
@@ -163,10 +163,6 @@ export default function Account() {
         );
     };
 
-    const handleDismiss = () => {
-        console.log("Alert dismissed");
-    };
-
     const handleCloseModal = () => {
         setModalVisible(false);
     };
@@ -174,13 +170,12 @@ export default function Account() {
     const navigation = useNavigation();
     return (
         <>
-            <Alert message={alertMessage} visible={alertVisible} onDismiss={handleDismiss} />
+            <Alert message={alertMessage} visible={alertVisible} />
             <Confirmation
                 message="Are you sure you want to proceed?"
                 visible={confirmationVisible}
                 onConfirm={handleRemove}
                 onCancel={handleCancel}
-                onDismiss={handleDismiss}
             />
             <ScrollView
                 contentContainerStyle={{ flexGrow: 1 }}

@@ -1,7 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
 
-const Confirmation = ({ message, visible, onConfirm, onCancel, onDismiss }) => {
+interface ConfirmationProps {
+    message: string;
+    visible: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+}
+
+const Confirmation: React.FC<ConfirmationProps> = ({ message, visible, onConfirm, onCancel }) => {
     return (
         <Modal
             transparent={true}
@@ -17,7 +24,6 @@ const Confirmation = ({ message, visible, onConfirm, onCancel, onDismiss }) => {
                             style={[styles.button, styles.buttonCancel]}
                             onPress={() => {
                                 if (onCancel) onCancel();
-                                if (onDismiss) onDismiss();
                             }}
                         >
                             <Text style={styles.buttonText}>Cancel</Text>
@@ -26,7 +32,6 @@ const Confirmation = ({ message, visible, onConfirm, onCancel, onDismiss }) => {
                             style={[styles.button, styles.buttonConfirm]}
                             onPress={() => {
                                 if (onConfirm) onConfirm();
-                                if (onDismiss) onDismiss();
                             }}
                         >
                             <Text style={styles.buttonText}>Yes</Text>

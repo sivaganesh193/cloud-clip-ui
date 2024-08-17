@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 
-const Alert = ({ message, visible, onDismiss }) => {
+interface AlertProps {
+  message: string;
+  visible: boolean;
+}
+
+const Alert: React.FC<AlertProps> = ({ message, visible }) => {
   const [showing, setShowing] = useState(visible);
   const fadeAnim = new Animated.Value(0);
 

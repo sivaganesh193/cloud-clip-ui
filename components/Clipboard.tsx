@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import { handleShare, setClipboard } from '@/service/clipboardService';
 import { Clipboard } from '@/service/models';
 import { deleteClipboardEntry, updateTimestampInClipboard } from '@/service/firebaseService';
 import { truncateContent } from '@/service/util';
-import { AuthContext } from '@/auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import NoItemsComponent from './NoItems';
 import Confirmation from './Confirmation';
 
@@ -31,16 +31,10 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
         });
     };
 
-    const authContext = useContext(AuthContext); // Get AuthContext
-    if (!authContext) {
-        // Handle the case where AuthContext is undefined
-        throw new Error("AuthContext must be used within an AuthProvider");
-    }
-
     const handleClickEntry = async (id: string) => {
         await updateTimestampInClipboard(id);
     }
-    const { user } = authContext; // Use AuthContext to get the user
+    const { user } = useAuth(); // Use AuthContext to get the user
 
     const showConfirmation = (itemId: string) => {
         setConfirmationVisible(true);
@@ -56,18 +50,13 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
         handleDelete(itemToRemove);
     };
 
-    const handleDismiss = () => {
-        console.log("Alert dismissed");
-    };
-
     return (
         <>
             <Confirmation
                 message="Are you sure you want to proceed?"
                 visible={confirmationVisible}
                 onConfirm={handleRemove}
-                onCancel={handleCancel}
-                onDismiss={handleDismiss}
+                onCancel={handleCancel} 
             />
             <ThemedView style={styles.container}>
                 {clipboardEntries.length > 0 ? (
@@ -91,7 +80,7 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
                                     <View style={styles.iconContainer}>
                                         <TouchableOpacity
                                             style={styles.iconButton}
-                                            onPress={() => showConfirmation(entry.id)}
+                                            onPress={() => showConfirmation(entry.id || "")}
                                         >
                                             <Ionicons name="trash-outline" size={20} color={'black'} />
                                         </TouchableOpacity>

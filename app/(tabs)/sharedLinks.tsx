@@ -6,14 +6,13 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
 import { router, useNavigation } from 'expo-router';
-import { createClipboardEntry, createSharedLink, deleteSharedLink, listenToSharedLinks } from '@/service/firebaseService';
-import { AuthContext } from '@/auth/AuthContext';
-import { getDomain, truncateContent } from '@/service/util';
-import { getDeviceId } from '@/service/deviceService';
+import { deleteSharedLink, listenToSharedLinks } from '@/service/firebaseService';
+import { useAuth } from '@/auth/AuthContext';
+import { truncateContent } from '@/service/util';
 import { Shared } from '@/service/models';
 import * as Crypto from 'expo-crypto';
 import { Timestamp } from 'firebase/firestore';
-import { getSharedLinkURL, handleShare, setClipboard } from '@/service/clipboardService';
+import { getSharedLinkURL, handleShare } from '@/service/clipboardService';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import NoItemsComponent from '@/components/NoItems';
 import Alert from '@/components/Alert';
@@ -37,12 +36,7 @@ export default function SharedLinks() {
 		setTimeout(() => setAlertVisible(false), 3000); // Dismiss alert after 3 seconds
 	};
 
-	const authContext = useContext(AuthContext); // Get AuthContext
-	if (!authContext) {
-		// Handle the case where AuthContext is undefined
-		throw new Error("AuthContext must be used within an AuthProvider");
-	}
-	const { user } = authContext; // Use AuthContext to get the user
+	const { user } = useAuth(); // Use AuthContext to get the user
 
 	const handleRemove = () => {
 		deleteSharedLink(itemToRemoveId);
@@ -93,23 +87,18 @@ export default function SharedLinks() {
 		setConfirmationVisible(false);
 	};
 
-	const handleDismiss = () => {
-		console.log("Alert dismissed");
-	};
-
 	const showConfirmation = (item: any) => {
 		setConfirmationVisible(true);
 		setItemToRemoveId(item.id);
 	}
 	return (
 		<>
-			<Alert message={alertMessage} visible={alertVisible} onDismiss={undefined} />
+			<Alert message={alertMessage} visible={alertVisible}/>
 			<Confirmation
 				message="Are you sure you want to proceed?"
 				visible={confirmationVisible}
 				onConfirm={handleRemove}
 				onCancel={handleCancel}
-				onDismiss={handleDismiss}
 			/>
 			<ScrollView
 				contentContainerStyle={{ flexGrow: 1 }}

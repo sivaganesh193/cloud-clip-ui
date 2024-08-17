@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import Header from '../../components/Header';
 import Description from '@/components/Description';
 import { useNavigation } from 'expo-router';
-import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
+import { useAuth } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
 import { createClipboardEntry, fetchClipboardEntries, listenToClipboardEntries } from '@/service/firebaseService';
@@ -24,13 +24,7 @@ export default function Homepage() {
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 	const [alertVisible, setAlertVisible] = useState(false);
 	const [alertMessage, setAlertMessage] = useState('');
-
-	const authContext = useContext(AuthContext); // Get AuthContext
-	if (!authContext) {
-		// Handle the case where AuthContext is undefined
-		throw new Error("AuthContext must be used within an AuthProvider");
-	}
-	const { user } = authContext; // Use AuthContext to get the user
+	const { user } = useAuth(); // Use AuthContext to get the user
 	const navigation = useNavigation();
 	const { deviceId, deviceName } = useDeviceDetails();
 
@@ -60,7 +54,7 @@ export default function Homepage() {
 		// setData(cli)
 	}
 
-	const dataRef = useRef(null);
+	const dataRef = useRef<string | null>(null);
 	useEffect(() => {
 		dataRef.current = data; // Keep the ref updated with the latest data state
 	}, [data]);
@@ -97,7 +91,7 @@ export default function Homepage() {
 
 	return (
 		<>
-			<Alert message={alertMessage} visible={alertVisible} onDismiss={undefined} />
+			<Alert message={alertMessage} visible={alertVisible} />
 			<ScrollView
 				contentContainerStyle={{ flexGrow: 1 }}
 				showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar

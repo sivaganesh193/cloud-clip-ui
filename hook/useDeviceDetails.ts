@@ -1,5 +1,5 @@
 // useDeviceDetails.ts
-import { AuthContext } from '@/auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { getDeviceId } from '@/service/deviceService';
 import { fetchDevices } from '@/service/firebaseService';
 import { useState, useEffect, useContext } from 'react';
@@ -15,11 +15,8 @@ const useDeviceDetails = () => {
     deviceName: null
   });
 
-  const authContext = useContext(AuthContext);
-    if (!authContext) {
-        throw new Error("AuthContext must be used within an AuthProvider");
-    }
-    const { user } = authContext; 
+
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchDeviceDetails = async () => {
@@ -28,7 +25,7 @@ const useDeviceDetails = () => {
         if (deviceId) {
           // Fetch devices and check deviceId here
           const devices = await fetchDevices(user?.uid || null); // Adjust according to your logic
-          
+
           const foundDevice = devices.find((device) => device.deviceId?.includes(deviceId));
           if (foundDevice) {
             setDeviceDetails({

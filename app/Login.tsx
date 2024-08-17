@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, TextInput, StyleSheet, useColorScheme, Alert, TouchableOpacity, Text, Dimensions, Modal, TouchableWithoutFeedback } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, UserCredential } from 'firebase/auth';
 import { MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
-import { AuthContext } from '@/auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { createUser } from '@/service/firebaseService';
 
 const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onClose: () => void; onSuccess: () => void; }) => {
@@ -44,13 +43,8 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
     setShowConfirmPassword(false);
     setIsForgotPasswordMode(false); // Reset forgot password mode
   };
-  const authContext = useContext(AuthContext);
 
-  if (!authContext) {
-    throw new Error("AuthContext must be used within an AuthProvider");
-  }
-
-  const { setUser } = authContext;
+  const { setUser } = useAuth();
 
   const handleLogin = async () => {
     if (!username || !password) {

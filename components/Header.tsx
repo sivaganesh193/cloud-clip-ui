@@ -1,12 +1,12 @@
 import LoginPopup from '@/app/Login';
 import React, { useState, useContext } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
-import { AuthContext } from '@/auth/AuthContext'; // Import AuthContext
+import { useAuth } from '@/auth/AuthContext'; // Import AuthContext
 import { useRouter } from 'expo-router';
 
 const Header = ({ navigation }: { navigation: any }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const { user, logout } = useContext(AuthContext); // Get user and logout from AuthContext
+  const { user, logout } = useAuth()
 
   const openModal = () => setModalVisible(true);
   const closeModal = () => setModalVisible(false);
