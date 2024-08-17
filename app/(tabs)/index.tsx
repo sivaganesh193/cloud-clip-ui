@@ -79,12 +79,12 @@ export default function Homepage() {
 							// setData(text)
 						})
 						.catch((err) => console.log(err));
-				}, 2400000);
+				}, 1000);
 
 				// Start the second interval to fetch clipboard entries every 5 seconds
 				const dataIntervalId = setInterval(() => {
 					getClipboardData();
-				}, 2400000);
+				}, 2147483647);
 
 				// Cleanup both intervals on unmount
 				return () => {
