@@ -12,7 +12,6 @@ import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
 import { createClipboardEntry, fetchClipboardEntries } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
-import { getDeviceId, setDeviceId } from '@/service/deviceService';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 
 export default function Homepage() {

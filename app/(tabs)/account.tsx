@@ -4,29 +4,27 @@ import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { AuthContext } from '@/auth/AuthContext';
-import { doc, Timestamp, updateDoc } from 'firebase/firestore';
-import { db } from '@/firebaseConfig';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { createDevice, deleteDevice, fetchDevices, fetchUser, updateDevice } from '@/service/firebaseService';
-import { getDeviceId, getDeviceOS, setDeviceId } from '@/service/deviceService';
+import { createDevice, deleteDevice, fetchUser, listenToDevices, updateDevice, updateUser } from '@/service/firebaseService';
+import { getDeviceOS, removeDeviceId, setDeviceId } from '@/service/deviceService';
 import { Device } from '@/service/models';
 import * as Crypto from 'expo-crypto';
 import Header from '@/components/Header';
 import { useNavigation } from '@react-navigation/native';
 import Alert from '@/components/Alert';
 import Confirmation from '@/components/Confirmation';
+import useDeviceDetails from '@/hook/useDeviceDetails';
 
 export default function Account() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
 
     const [name, setName] = useState('');
-    const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
     const [devices, setDevices] = useState<Device[]>([]); // Define the type for the state
     const [modalVisible, setModalVisible] = useState(false);
-    const [deviceName, setDeviceName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [highlightIndex, setHighlightIndex] = useState(-1);
+    const [formDeviceName, setFormDeviceName] = useState('');
 
     const authContext = useContext(AuthContext); // Get AuthContext
     if (!authContext) {
@@ -38,6 +36,7 @@ export default function Account() {
     const [alertMessage, setAlertMessage] = useState("");
     const [confirmationVisible, setConfirmationVisible] = useState(false);
     const [deviceIDToRemove, setDeviceIDToRemove] = useState("");
+	const { deviceId, deviceName } = useDeviceDetails();
 
     const showConfirmation = (item: Device) => {
         setDeviceIDToRemove(item.id || '');
@@ -54,21 +53,15 @@ export default function Account() {
         setTimeout(() => setAlertVisible(false), 3000);
     };
 
-    const fetchData = async () => {
-        if (user && currentDeviceId) {
-            // const devices = await fetchDevices(user.uid);
-            setDevices(devices);
-            const matchingIndex = currentDeviceId ? devices.findIndex(device => device.deviceId?.includes(currentDeviceId)) : -1;
-            setHighlightIndex(matchingIndex);
-        }
+    const setAndHighlight = async (devices: Device[]) => {
+        setDevices(devices);
+        const matchingIndex = deviceName ? devices.findIndex(device => device.deviceId?.includes(deviceId)) : -1;
+        setHighlightIndex(matchingIndex);
     };
 
     useEffect(() => {
         const initialize = async () => {
             try {
-                // Fetch device ID and user details concurrently
-                const deviceId = await getDeviceId();
-                setCurrentDeviceId(deviceId);
                 if (user) {
                     const userData = await fetchUser(user.uid);
                     if (userData) {
@@ -77,23 +70,19 @@ export default function Account() {
                         console.log('User not found');
                     }
                 }
+                if (user && deviceId) {
+                    // Define unsubscribe function
+                    const unsubscribe = listenToDevices(user.uid, setAndHighlight);
 
-                if (deviceId) {
-                    fetchData();
+                    // Cleanup the listener on unmount
+                    return () => unsubscribe();
                 }
-
-                const intervalId = setInterval(() => {
-                    fetchData();
-                }, 2147483647);
-
-                return () => clearInterval(intervalId);
             } catch (error) {
                 console.error('Error during initialization:', error);
             }
         };
-
         initialize();
-    }, [user, currentDeviceId]);
+    }, [user,deviceId]);
 
     const handleSave = () => {
         if (user) {
@@ -108,19 +97,18 @@ export default function Account() {
     };
 
     const handleAddDevice = () => {
-        if (deviceName.length < 5) {
+        if (formDeviceName.length < 5) {
             setErrorMessage('Device name must be at least 5 characters long.');
             return;
         }
-        if (currentDeviceId) {
-            const deviceId = currentDeviceId + '_*_' + deviceName;
+        if (deviceId) {
+            const newDeviceId = deviceId + '_*_' + formDeviceName;
             const deviceOS = getDeviceOS();
             if (user) {
-                createDevice({ deviceName: deviceName, deviceId: deviceId, os: deviceOS, sync: true, userId: user.uid }).then(() => {
-                    setDeviceId(currentDeviceId);
-                    fetchData();
+                createDevice({ deviceName: formDeviceName, deviceId: newDeviceId, os: deviceOS, sync: true, userId: user.uid }).then(() => {
+                    setDeviceId(newDeviceId);
                     setModalVisible(false);
-                    setDeviceName(''); // Reset the input field
+                    setFormDeviceName(''); // Reset the input field
                     setErrorMessage(''); // Reset the error message
                 })
             }
@@ -131,31 +119,19 @@ export default function Account() {
         const device = devices[index];
         if (device.id) {
             device.sync = !(device.sync);
-            updateDevice(device.id, device).then(() => fetchData());
+            updateDevice(device.id, device);
         }
     };
 
     const handleRemove = () => {
         setConfirmationVisible(false);
-        deleteDevice(deviceIDToRemove).then(() => fetchData());
+        deleteDevice(deviceIDToRemove).then(() => {
+            removeDeviceId(deviceId);
+        });
     };
 
     const handleLogout = () => {
         logout(); // Call the logout function from useAuth
-    };
-
-
-    const updateUser = async (id: string, name: string) => {
-        try {
-            const userDocRef = doc(db, 'users', id);
-            await updateDoc(userDocRef, {
-                name: name,
-                updatedAt: Timestamp.now()
-            });
-            console.log(`User with ID ${id} updated successfully`);
-        } catch (error) {
-            console.error('Error updating user: ', error);
-        }
     };
 
     const renderItem = ({ item, index }: { item: Device, index: number }) => {
@@ -217,8 +193,8 @@ export default function Account() {
                                     <Text style={styles.modalText}>Device Name: </Text>
                                     <TextInput
                                         style={styles.input}
-                                        value={deviceName}
-                                        onChangeText={setDeviceName}
+                                        value={formDeviceName}
+                                        onChangeText={setFormDeviceName}
                                     />
                                     {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
                                     <TouchableOpacity

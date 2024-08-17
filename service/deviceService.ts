@@ -82,6 +82,43 @@ export const setDeviceId = async (deviceId: string): Promise<void> => {
     }
 };
 
+const removeAppDeviceId = async (): Promise<void> => {
+    try {
+        await SecureStore.deleteItemAsync('deviceId');
+        console.log('App Device Id removed');
+    } catch (error) {
+        console.error('Error removing app device ID:', error);
+        throw error; // Optionally, rethrow the error if you want to propagate it
+    }
+};
+
+const removeWebDeviceId = async (): Promise<void> => {
+    try {
+        await AsyncStorage.removeItem('deviceId');
+        console.log('Web Device Id removed');
+    } catch (error) {
+        console.error('Error removing web device ID:', error);
+        throw error; // Optionally, rethrow the error if you want to propagate it
+    }
+};
+
+export const removeDeviceId = async (deviceId: string): Promise<void> => {
+    try {
+        const existing = await getDeviceId();
+        console.log('existing',existing);
+        console.log('tbd',deviceId);
+        if(existing === deviceId){
+            if (Platform.OS === 'android' || Platform.OS === 'ios') {
+                await removeAppDeviceId();
+            } else {
+                await removeWebDeviceId();
+            }
+        }
+    } catch (error) {
+        console.error('Error removing device ID:', error);
+    }
+};
+
 export const getDeviceOS = (): string => {
     return Platform.OS;
 };
