@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { Platform } from 'react-native';
 import { Linking } from 'react-native';
 
