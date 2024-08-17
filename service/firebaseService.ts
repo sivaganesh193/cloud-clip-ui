@@ -1,5 +1,5 @@
 import { db } from '../firebaseConfig'; // Import your Firestore instance
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { Clipboard, Device, Shared, User } from './models'; // Import the User interface
 
 /**
@@ -74,7 +74,7 @@ export const fetchUser = async (userId: string): Promise<User | null> => {
  * @returns A promise that resolves to an array of devices.
  */
 export const fetchDevices = async (userId: string | null): Promise<Device[]> => {
-    if(userId){
+    if (userId) {
         try {
             const devicesRef = collection(db, 'devices');
             const q = query(devicesRef, where('userId', '==', userId));
@@ -155,16 +155,9 @@ export const deleteDevice = async (id: string): Promise<void> => {
  */
 export const fetchClipboardEntries = async (userId: string): Promise<Clipboard[]> => {
     try {
-        // Reference to the clipboards collection
         const clipboardsRef = collection(db, 'clipboards');
-
-        // Query to filter clipboard entries based on the user ID
-        const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
-
-        // Fetch clipboard documents that match the query
+        const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'), limit(10));
         const clipboardQuerySnapshot = await getDocs(clipboardQuery);
-
-        // Map through clipboard documents and extract clipboard data
         const clipboardEntries: Clipboard[] = [];
 
         for (const doc of clipboardQuerySnapshot.docs) {

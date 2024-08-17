@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
@@ -20,6 +20,7 @@ export default function Homepage() {
 	const isDarkMode = colorScheme === 'dark';
 
 	const [data, setData] = useState("");
+	const [saveTextData, setSaveTextData] = useState("");
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 
 	const authContext = useContext(AuthContext); // Get AuthContext
@@ -47,29 +48,40 @@ export default function Homepage() {
 		if (user) {
 			fetchClipboardEntries(user.uid)
 				.then((data) => setClipboardEntries(data));
+			console.log(clipboardEntries);
 		}
 	};
+
+	const dataRef = useRef(null);
+	useEffect(() => {
+		dataRef.current = data; // Keep the ref updated with the latest data state
+	}, [data]);
 
 	useEffect(() => {
 		const initialize = async () => {
 			try {
-				// Fetch clipboard data immediately
 				await getClipboardData();
 
 				const clipboardIntervalId = setInterval(() => {
 					getClipboard()
 						.then((text) => {
-							setData(text)
+							if (text !== dataRef.current) {
+								setData(text);
+								createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text }).then(() => {
+									getClipboardData();
+								});
+							} else {
+
+							}
 						})
-						.catch(() => {});
+						.catch(() => { });
 				}, 1000);
 
-				// Start the second interval to fetch clipboard entries every 5 seconds
 				const dataIntervalId = setInterval(() => {
 					getClipboardData();
 				}, 2147483647);
 
-				// Cleanup both intervals on unmount
+				// Cleanup function for intervals when component unmounts
 				return () => {
 					clearInterval(clipboardIntervalId);
 					clearInterval(dataIntervalId);
@@ -81,7 +93,6 @@ export default function Homepage() {
 
 		initialize();
 	}, [user]);
-
 	return (
 		<ScrollView
 			contentContainerStyle={{ flexGrow: 1 }}
@@ -98,24 +109,42 @@ export default function Homepage() {
 							<ThemedView style={styles.container}>
 								<View style={styles.headerWithButton}>
 									<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
-									<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
-										<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
-										{Platform.OS === 'web' && (
-											<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
-										)}
-									</TouchableOpacity>
-									<TouchableOpacity style={styles.copyButton} onPress={() => handleSave(data)}>
-										<Ionicons name="save-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
-										{Platform.OS === 'web' && (
-											<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Save Text</Text>
-										)}
-									</TouchableOpacity>
+									<View style={styles.buttonContainer}>
+										<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
+											<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+											{Platform.OS === 'web' && (
+												<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
+											)}
+										</TouchableOpacity>
+									</View>
 								</View>
 								<View style={styles.textBox}>
 									<TextInput
 										style={[styles.text, styles.textInput]}
 										value={data}
 										onChangeText={setData}
+										multiline={true}
+										editable={true}
+									/>
+								</View>
+							</ThemedView>
+							<ThemedView style={styles.container}>
+								<View style={styles.headerWithButton}>
+									<ThemedText type="subtitle" style={styles.text}>Save to clipboard</ThemedText>
+									<View style={styles.buttonContainer}>
+										<TouchableOpacity style={styles.copyButton} onPress={() => handleSave(saveTextData)}>
+											<Ionicons name="save-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+											{Platform.OS === 'web' && (
+												<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Save Text</Text>
+											)}
+										</TouchableOpacity>
+									</View>
+								</View>
+								<View style={styles.textBox}>
+									<TextInput
+										style={[styles.text, styles.textInput]}
+										value={saveTextData}
+										onChangeText={setSaveTextData}
 										multiline={true} // Allows text to wrap and expand vertically
 										editable={true} // Makes the text input editable
 									/>
@@ -238,10 +267,17 @@ const styles = StyleSheet.create({
 		marginLeft: 10,
 	},
 	textBox: {
-		flex: 1,
-		borderWidth: 1,         // Thickness of the border
-		borderColor: '#000',    // Color of the border
-		borderRadius: 0         // Optional: Rounds the corners of the border
+		flex: 0.5,
+		borderColor: '#000',
+		borderRadius: 0
+	},
+	textInput: {
+		minHeight: 100,
+		flex: 0.5,
+		borderWidth: 1,
+		borderColor: '#000',
+		textAlignVertical: 'top',
+		padding: 10,
 	},
 	headerWithButton: {
 		flexDirection: 'row',
@@ -261,11 +297,5 @@ const styles = StyleSheet.create({
 	},
 	scrollView: {
 		flex: 1,
-	},
-	textInput: {
-		minHeight: 180,
-		flex: 1,
-		textAlignVertical: 'top',
-		padding: 10,
 	},
 });

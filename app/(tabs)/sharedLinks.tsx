@@ -33,30 +33,45 @@ export default function SharedLinks() {
 	const handleShare = async (content: string) => {
 		if (content) {
 			try {
+				let clipRef: any;
+				let sharedRef: any;
 				if (user && currentDeviceId) {
-					const clipRef = await createClipboardEntry({
+					clipRef = await createClipboardEntry({
 						userId: user.uid,
 						deviceId: currentDeviceId,
-						content: content
+						content: content,
+						deviceName: ''
 					});
-					const sharedRef = await createSharedLink({
+					sharedRef = await createSharedLink({
 						userId: user.uid,
 						clipboardId: clipRef,
 						content: content,
 						code: Crypto.randomUUID(), // will change url to smaller code
 					})
-					const linkCode = clipRef;
-					const sharedLinkURL = getSharedLinkURL(linkCode);
-					await setClipboard(sharedLinkURL);
-					setTextToShare('');
+				} else {
+					clipRef = await createClipboardEntry({
+						userId: '',
+						deviceId: '',
+						content: content,
+						deviceName: ''
+					});
+					sharedRef = await createSharedLink({
+						userId: '',
+						clipboardId: clipRef,
+						content: content,
+						code: Crypto.randomUUID(), // will change url to smaller code
+					})
 				}
-
-			} catch (error) {
+				const sharedLinkURL = getSharedLinkURL(sharedRef);
+				await setClipboard(sharedLinkURL);
+				setTextToShare('');
+			}
+			catch (error) {
 				console.error('Error creating shared link: ', error);
 			}
 		}
 		else {
-			window.alert('Please enter text to share'); // use saroja common alert
+			window.alert('Please enter text to share'); 
 		}
 	};
 
@@ -93,27 +108,27 @@ export default function SharedLinks() {
 	};
 
 	useEffect(() => {
-        const initialize = async () => {
-            try {
-                // Fetch device ID and user details concurrently
-                const deviceId = await getDeviceId();
-                setCurrentDeviceId(deviceId);
+		const initialize = async () => {
+			try {
+				// Fetch device ID and user details concurrently
+				const deviceId = await getDeviceId();
+				setCurrentDeviceId(deviceId);
 
-                // Only set up the listener if user and deviceId are available
-                if (user && deviceId) {
-                    // Define unsubscribe function
-                    const unsubscribe = listenToSharedLinks(user.uid, setSharedLinks);
+				// Only set up the listener if user and deviceId are available
+				if (user && deviceId) {
+					// Define unsubscribe function
+					const unsubscribe = listenToSharedLinks(user.uid, setSharedLinks);
 
-                    // Cleanup the listener on unmount
-                    return () => unsubscribe();
-                }
-            } catch (error) {
-                console.error('Error during initialization:', error);
-            }
-        };
-        // Run the initialize function
-        initialize();
-    }, [user]); 
+					// Cleanup the listener on unmount
+					return () => unsubscribe();
+				}
+			} catch (error) {
+				console.error('Error during initialization:', error);
+			}
+		};
+		// Run the initialize function
+		initialize();
+	}, [user]);
 
 	return (
 		<ScrollView
