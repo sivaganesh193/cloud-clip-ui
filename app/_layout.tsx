@@ -6,6 +6,7 @@ import { useContext, useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider, AuthContext } from '@/auth/AuthContext'; // Import AuthProvider and AuthContext
+import { Platform } from 'react-native';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -17,7 +18,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    document.title = "Cloud-Clip";
+    if (Platform.OS === 'web') document.title = "Cloud-Clip";
     if (loaded) {
       SplashScreen.hideAsync();
     }

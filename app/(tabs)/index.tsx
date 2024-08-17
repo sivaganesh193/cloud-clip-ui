@@ -55,6 +55,11 @@ export default function Homepage() {
 		}
 	};
 
+	const refresh = (clipboards: Clipboard[]) => {
+		setClipboardEntries(clipboards);
+		// setData(cli)
+	}
+
 	const dataRef = useRef(null);
 	useEffect(() => {
 		dataRef.current = data; // Keep the ref updated with the latest data state
@@ -64,9 +69,7 @@ export default function Homepage() {
 		const initialize = async () => {
 			try {
 				if (user && deviceId) {
-					// Define unsubscribe function
 					const unsubscribe = listenToClipboardEntries(user.uid, setClipboardEntries);
-					// Cleanup the listener on unmount
 					return () => unsubscribe();
 				}
 				if (user) {
@@ -90,8 +93,8 @@ export default function Homepage() {
 			}
 		};
 		initialize();
-	}, [user,deviceId]);
-	
+	}, [user, deviceId]);
+
 	return (
 		<>
 			<Alert message={alertMessage} visible={alertVisible} onDismiss={undefined} />

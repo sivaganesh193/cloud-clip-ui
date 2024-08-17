@@ -1,14 +1,15 @@
 import React, { useContext, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { handleShare, setClipboard } from '@/service/clipboardService';
 import { Clipboard } from '@/service/models';
-import { deleteClipboardEntry } from '@/service/firebaseService';
+import { deleteClipboardEntry, updateTimestampInClipboard } from '@/service/firebaseService';
 import { truncateContent } from '@/service/util';
 import { AuthContext } from '@/auth/AuthContext';
 import NoItemsComponent from './NoItems';
+import Confirmation from './Confirmation';
 
 interface ClipboardScreenProps {
     clipboardEntries: Clipboard[];
@@ -17,6 +18,8 @@ interface ClipboardScreenProps {
 
 const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, showAlert }) => {
 
+    const [confirmationVisible, setConfirmationVisible] = useState(false);
+    const [itemToRemove, setItemToRemove] = useState("");
     // Function to handle copy action
     const handleDelete = (id: string) => {
         deleteClipboardEntry(id).then(async () => {
@@ -33,46 +36,81 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
         // Handle the case where AuthContext is undefined
         throw new Error("AuthContext must be used within an AuthProvider");
     }
+
+    const handleClickEntry = async (id: string) => {
+        await updateTimestampInClipboard(id);
+    }
     const { user } = authContext; // Use AuthContext to get the user
 
+    const showConfirmation = (itemId: string) => {
+        setConfirmationVisible(true);
+        setItemToRemove(itemId);
+    }
+
+    const handleCancel = () => {
+        setConfirmationVisible(false);
+    };
+
+    const handleRemove = () => {
+        setConfirmationVisible(false);
+        handleDelete(itemToRemove);
+    };
+
+    const handleDismiss = () => {
+        console.log("Alert dismissed");
+    };
+
     return (
-        <ThemedView style={styles.container}>
-            {clipboardEntries.length > 0 ? (
-                <ScrollView contentContainerStyle={styles.scrollContainer}>
-                    {clipboardEntries.map((entry, index) => (
-                        <View key={entry.id} style={styles.entryContainer}>
-                            <View style={styles.textContainer}>
-                                <ThemedText type='default' style={styles.clipboardText}>
-                                    {truncateContent(entry.content)}
-                                </ThemedText>
-                                <ThemedText type='default' style={styles.clipboardDevice}>
-                                    Content Length: {entry.content.length}
-                                </ThemedText>
-                                <ThemedText type='default' style={styles.clipboardDevice}>
-                                    Device: {entry.deviceName || 'Unknown Device'}
-                                </ThemedText>
-                            </View>
-                            <View style={styles.iconContainer}>
-                                <TouchableOpacity
-                                    style={styles.iconButton}
-                                    onPress={() => handleDelete(entry.id || '')}
-                                >
-                                    <Ionicons name="trash-outline" size={20} color={'black'} />
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.iconButton}
-                                    onPress={() => handleShare(entry.content, user, entry.deviceId, entry.deviceName, showAlert)}
-                                >
-                                    <Ionicons name="share-outline" size={20} color={'black'} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    ))}
-                </ScrollView>
-            ) : (
-                <NoItemsComponent></NoItemsComponent>
-            )}
-        </ThemedView>
+        <>
+            <Confirmation
+                message="Are you sure you want to proceed?"
+                visible={confirmationVisible}
+                onConfirm={handleRemove}
+                onCancel={handleCancel}
+                onDismiss={handleDismiss}
+            />
+            <ThemedView style={styles.container}>
+                {clipboardEntries.length > 0 ? (
+                    <ScrollView contentContainerStyle={styles.scrollContainer}>
+                        {clipboardEntries.map((entry, index) => (
+                            <TouchableOpacity
+                                onPress={() => handleClickEntry(entry.id || '')}
+                            >
+                                <View key={entry.id} style={styles.entryContainer}>
+                                    <View style={styles.textContainer}>
+                                        <ThemedText type='default' style={styles.clipboardText}>
+                                            {truncateContent(entry.content)}
+                                        </ThemedText>
+                                        <ThemedText type='default' style={styles.clipboardDevice}>
+                                            Content Length: {entry.content.length}
+                                        </ThemedText>
+                                        <ThemedText type='default' style={styles.clipboardDevice}>
+                                            Device: {entry.deviceName || 'Unknown Device'}
+                                        </ThemedText>
+                                    </View>
+                                    <View style={styles.iconContainer}>
+                                        <TouchableOpacity
+                                            style={styles.iconButton}
+                                            onPress={() => showConfirmation(entry.id)}
+                                        >
+                                            <Ionicons name="trash-outline" size={20} color={'black'} />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={styles.iconButton}
+                                            onPress={() => handleShare(entry.content, user, entry.deviceId, entry.deviceName, showAlert)}
+                                        >
+                                            <Ionicons name="share-outline" size={20} color={'black'} />
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                ) : (
+                    <NoItemsComponent></NoItemsComponent>
+                )}
+            </ThemedView>
+        </>
     );
 };
 
@@ -98,7 +136,8 @@ const styles = StyleSheet.create({
         shadowOffset: { height: 2, width: 2 },
         shadowColor: '#000',
         shadowOpacity: 0.1,
-        gap: 10
+        gap: 10,
+        cursor: Platform.OS === 'web' ? 'pointer' : 'auto'
     },
     clipboardText: {
         fontSize: 14,

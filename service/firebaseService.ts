@@ -266,6 +266,18 @@ export const deleteClipboardEntry = async (clipboardId: string): Promise<void> =
     }
 };
 
+export const updateTimestampInClipboard = async (clipboardId: string): Promise<void> => {
+    try {
+        const clipboardRef = doc(db, 'clipboards', clipboardId); 
+        await updateDoc(clipboardRef, {
+            updatedAt: new Date() 
+        });
+        console.log('Timestamp updated successfully!');
+    } catch (error) {
+        console.error('Error updating timestamp: ', error);
+    }
+};
+
 /**
  * Sets up a real-time listener for shared links along with their associated clipboard content for a given userId.
  * 

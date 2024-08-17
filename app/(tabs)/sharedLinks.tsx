@@ -17,6 +17,7 @@ import { getSharedLinkURL, handleShare, setClipboard } from '@/service/clipboard
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import NoItemsComponent from '@/components/NoItems';
 import Alert from '@/components/Alert';
+import Confirmation from '@/components/Confirmation';
 
 export default function SharedLinks() {
 	const colorScheme = useColorScheme();
@@ -25,7 +26,8 @@ export default function SharedLinks() {
 	const [textToShare, setTextToShare] = useState("");
 	const [sharedLinks, setSharedLinks] = useState<Shared[]>([]); // Define the type for the state
 	const { deviceId, deviceName } = useDeviceDetails();
-
+	const [confirmationVisible, setConfirmationVisible] = useState(false);
+	const [itemToRemoveId, setItemToRemoveId] = useState("");
 	const [alertVisible, setAlertVisible] = useState(false);
 	const [alertMessage, setAlertMessage] = useState('');
 
@@ -42,15 +44,15 @@ export default function SharedLinks() {
 	}
 	const { user } = authContext; // Use AuthContext to get the user
 
-	const handleRemove = (id: string) => {
-		deleteSharedLink(id);
+	const handleRemove = () => {
+		deleteSharedLink(itemToRemoveId);
+		setConfirmationVisible(false);
 	};
 
 	const handleShareLink = (code: string) => {
 		const url = getSharedLinkURL(code);
-		console.log(url);
+		showAlert("Link copied to clipboard.")
 	};
-
 
 	const calculateTimeLeft = (expiryAt: Timestamp | null): string => {
 		if (!expiryAt) {
@@ -86,9 +88,29 @@ export default function SharedLinks() {
 		initialize();
 	}, [user, deviceId]);
 
+
+	const handleCancel = () => {
+		setConfirmationVisible(false);
+	};
+
+	const handleDismiss = () => {
+		console.log("Alert dismissed");
+	};
+
+	const showConfirmation = (item: any) => {
+		setConfirmationVisible(true);
+		setItemToRemoveId(item.id);
+	}
 	return (
 		<>
 			<Alert message={alertMessage} visible={alertVisible} onDismiss={undefined} />
+			<Confirmation
+				message="Are you sure you want to proceed?"
+				visible={confirmationVisible}
+				onConfirm={handleRemove}
+				onCancel={handleCancel}
+				onDismiss={handleDismiss}
+			/>
 			<ScrollView
 				contentContainerStyle={{ flexGrow: 1 }}
 				showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
@@ -139,7 +161,7 @@ export default function SharedLinks() {
 														</Text>
 													</View>
 													<View style={styles.buttonContainer}>
-														<TouchableOpacity style={styles.button} onPress={() => handleRemove(item.id || '')}>
+														<TouchableOpacity style={styles.button} onPress={() => showConfirmation(item)}>
 															<Ionicons name="trash-outline" size={24} color={'black'} />
 														</TouchableOpacity>
 														<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
