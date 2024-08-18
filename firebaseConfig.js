@@ -21,9 +21,9 @@ const firebaseAltConfig = {
     storageBucket: "backup-cloudclip.appspot.com",
     messagingSenderId: "213682652022",
     appId: "1:213682652022:web:5a8901876336cd5db93057"
-  };
+};
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseAltConfig);
 const db = getFirestore(app);
 
 let auth;

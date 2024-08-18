@@ -10,21 +10,34 @@ import { useNavigation } from 'expo-router';
 import { useAuth } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
-import { createClipboardEntry, fetchClipboardEntries, listenToClipboardEntries } from '@/service/firebaseService';
+import { createClipboardEntry, listenToClipboardEntries } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import Alert from '@/components/Alert';
+import { Timestamp } from 'firebase/firestore';
 
 export default function Homepage() {
 	const colorScheme = useColorScheme();
 	const isDarkMode = colorScheme === 'dark';
 
-	const [data, setData] = useState("");
+	interface ClipboardData {
+		content: string | null;
+		timestamp: Timestamp | null; // Use Date if you prefer Date objects
+	}
+
 	const [saveTextData, setSaveTextData] = useState("");
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 	const [alertVisible, setAlertVisible] = useState(false);
 	const [alertMessage, setAlertMessage] = useState('');
 	const { user } = useAuth(); // Use AuthContext to get the user
+	const [data, setData] = useState<ClipboardData>({
+		content: null,
+		timestamp: null // Initialize with current timestamp or another default value
+	});
+	const [clipboardData, setclipboardData] = useState<ClipboardData>({
+		content: null,
+		timestamp: null // Initialize with current timestamp or another default value
+	});
 	const navigation = useNavigation();
 	const { deviceId, deviceName } = useDeviceDetails();
 
@@ -41,8 +54,10 @@ export default function Homepage() {
 	const handleSave = (text: string) => {
 		if (user && deviceId) {
 			if (text) {
+				text = text.trim();
 				createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text });
-				showAlert("Text saved to clipboard")
+				showAlert("Text saved to clipboard");
+				setSaveTextData('');
 			} else {
 				showAlert("Please enter some text to save!")
 			}
@@ -51,33 +66,41 @@ export default function Homepage() {
 
 	const refresh = (clipboards: Clipboard[]) => {
 		setClipboardEntries(clipboards);
-		// setData(cli)
+		console.log(clipboards.length);
+		if(clipboards.length !== 0){
+			const recent = clipboards[0]?.content;
+			setData({ content: recent, timestamp: Timestamp.now() });
+			setClipboard(recent, showAlert, "Copied to clipboard"); // Pass the showAlert function
+		}
 	}
+	
+	const prevDataRef = useRef(data.content);
 
-	const dataRef = useRef<string | null>(null);
 	useEffect(() => {
-		dataRef.current = data; // Keep the ref updated with the latest data state
-	}, [data]);
+		prevDataRef.current = data.content;
+	}, [data.content]);
 
 	useEffect(() => {
 		const initialize = async () => {
 			try {
 				if (user && deviceId) {
-					const unsubscribe = listenToClipboardEntries(user.uid, setClipboardEntries);
+					const unsubscribe = listenToClipboardEntries(user.uid, refresh);
 					return () => unsubscribe();
 				}
 				if (user) {
 					const clipboardIntervalId = setInterval(() => {
 						getClipboard()
-							.then((text) => {
-								if (text !== dataRef.current) {
-									setData(text);
+							.then(async (text) => {
+								text = text.trim();
+								if (text !== prevDataRef.current && text !== '') {
+									console.log('you are here');
+									setData({ content: text, timestamp: Timestamp.now() });
+									setclipboardData({ content: text, timestamp: Timestamp.now() });
 									createClipboardEntry({ userId: user.uid, deviceId: deviceId, deviceName: deviceName, content: text });
 								}
 							})
 							.catch(() => { });
 					}, 1000);
-					// Cleanup function for intervals when component unmounts
 					return () => {
 						clearInterval(clipboardIntervalId);
 					};
@@ -108,7 +131,7 @@ export default function Homepage() {
 									<View style={styles.headerWithButton}>
 										<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
 										<View style={styles.buttonContainer}>
-											<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data)}>
+											<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data.content || '')}>
 												<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
 												{Platform.OS === 'web' && (
 													<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Copy Text</Text>
@@ -119,8 +142,7 @@ export default function Homepage() {
 									<View style={styles.textBox}>
 										<TextInput
 											style={[styles.text, styles.textInput]}
-											value={data}
-											onChangeText={setData}
+											value={data.content || ''}
 											multiline={true}
 											editable={false}
 										/>

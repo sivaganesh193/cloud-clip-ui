@@ -64,8 +64,9 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
                         {clipboardEntries.map((entry, index) => (
                             <TouchableOpacity
                                 onPress={() => handleClickEntry(entry.id || '')}
+                                key={entry.id}
                             >
-                                <View key={entry.id} style={styles.entryContainer}>
+                                <View style={styles.entryContainer}>
                                     <View style={styles.textContainer}>
                                         <ThemedText type='default' style={styles.clipboardText}>
                                             {truncateContent(entry.content)}
@@ -80,7 +81,7 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
                                     <View style={styles.iconContainer}>
                                         <TouchableOpacity
                                             style={styles.iconButton}
-                                            onPress={() => showConfirmation(entry.id || "")}
+                                            onPress={() => showConfirmation(entry.id || '')}
                                         >
                                             <Ionicons name="trash-outline" size={20} color={'black'} />
                                         </TouchableOpacity>
