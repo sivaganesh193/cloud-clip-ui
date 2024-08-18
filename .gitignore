@@ -24,3 +24,6 @@ functions
 package-lock.json
 %ProgramData%/Microsoft/Windows/UUS/State/_active.uusver
 .vscode/settings.json
+.env
+.env.backup
+config.txt
