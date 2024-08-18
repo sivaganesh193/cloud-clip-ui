@@ -10,7 +10,7 @@ import { useNavigation } from 'expo-router';
 import { useAuth } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
-import { createClipboardEntry, listenToClipboardEntries } from '@/service/firebaseService';
+import { createClipboardEntry, deleteAllClipboardEntriesWithBatch, listenToClipboardEntries } from '@/service/firebaseService';
 import { Clipboard } from '@/service/models';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import Alert from '@/components/Alert';
@@ -64,16 +64,28 @@ export default function Homepage() {
 		}
 	};
 
+	const handleBulkDelete = async () => {
+		if(user){
+			deleteAllClipboardEntriesWithBatch(user.uid).then(async () => {
+				try {
+					showAlert('Deleted all clipboard entries');
+				} catch (error) {
+					showAlert('Failed to perform bulk delete');
+				}
+			});
+		}
+    };
+
 	const refresh = (clipboards: Clipboard[]) => {
 		setClipboardEntries(clipboards);
 		console.log(clipboards.length);
-		if(clipboards.length !== 0){
+		if (clipboards.length !== 0) {
 			const recent = clipboards[0]?.content;
 			setData({ content: recent, timestamp: Timestamp.now() });
 			setClipboard(recent, showAlert, "Copied to clipboard"); // Pass the showAlert function
 		}
 	}
-	
+
 	const prevDataRef = useRef(data.content);
 
 	useEffect(() => {
@@ -172,7 +184,13 @@ export default function Homepage() {
 								</ThemedView>
 								<ThemedView style={styles.container}>
 									<View style={styles.headerWithButton}>
-										<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries</ThemedText>
+										<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries ({clipboardEntries.length})</ThemedText>
+										<TouchableOpacity style={styles.copyButton} onPress={() => handleBulkDelete()}>
+											<Ionicons name="trash-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+											{Platform.OS === 'web' && (
+												<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Delete all Entries</Text>
+											)}
+										</TouchableOpacity>
 									</View>
 									<ClipboardScreen clipboardEntries={clipboardEntries} showAlert={showAlert} />
 								</ThemedView>
@@ -318,5 +336,8 @@ const styles = StyleSheet.create({
 	},
 	scrollView: {
 		flex: 1,
+	},
+	iconButton: {
+		marginLeft: 10,
 	},
 });

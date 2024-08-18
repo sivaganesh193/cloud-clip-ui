@@ -1,5 +1,5 @@
 import { db } from '../firebaseConfig'; // Import your Firestore instance
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { Clipboard, Device, Shared, User } from './models'; // Import the User interface
 
 /**
@@ -263,6 +263,37 @@ export const deleteClipboardEntry = async (clipboardId: string): Promise<void> =
         console.log(`Clipboard entry with ID ${clipboardId} deleted successfully`);
     } catch (error) {
         console.error('Error deleting clipboard entry: ', error);
+    }
+};
+
+/**
+ * Deletes all clipboard entries for a given userId using batch operations.
+ * 
+ * @param userId - The ID of the user whose clipboard entries are to be deleted.
+ * @returns A promise that resolves when all clipboard entries have been deleted.
+ */
+export const deleteAllClipboardEntriesWithBatch = async (userId: string): Promise<void> => {
+    try {
+        const clipboardsRef = collection(db, 'clipboards');
+        const clipboardQuery = query(clipboardsRef, where('userId', '==', userId));
+        const querySnapshot = await getDocs(clipboardQuery);
+
+        // Create a new batch
+        const batch = writeBatch(db);
+
+        // Add delete operations to the batch
+        querySnapshot.docs.forEach(docSnapshot => {
+            const clipboardDocRef = doc(db, 'clipboards', docSnapshot.id);
+            batch.delete(clipboardDocRef);
+        });
+
+        // Commit the batch
+        await batch.commit();
+        
+        console.log(`All clipboard entries for user ${userId} deleted successfully`);
+    } catch (error) {
+        console.error('Error deleting all clipboard entries with batch: ', error);
+        throw error;
     }
 };
 
