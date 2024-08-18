@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
@@ -12,11 +12,12 @@ import { truncateContent } from '@/service/util';
 import { Shared } from '@/service/models';
 import * as Crypto from 'expo-crypto';
 import { Timestamp } from 'firebase/firestore';
-import { getSharedLinkURL, handleShare } from '@/service/clipboardService';
+import { setClipboard } from '@/service/clipboardService';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import NoItemsComponent from '@/components/NoItems';
 import Alert from '@/components/Alert';
 import Confirmation from '@/components/Confirmation';
+import { getSharedLinkURL, handleShare } from '@/service/shareService';
 
 export default function SharedLinks() {
 	const colorScheme = useColorScheme();
@@ -45,7 +46,7 @@ export default function SharedLinks() {
 
 	const handleShareLink = (code: string) => {
 		const url = getSharedLinkURL(code);
-		showAlert("Link copied to clipboard.")
+		setClipboard(url, showAlert, "Link copied to clipboard."); // Pass the showAlert function
 	};
 
 	const calculateTimeLeft = (expiryAt: Timestamp | null): string => {

@@ -1,15 +1,15 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
-import { handleShare, setClipboard } from '@/service/clipboardService';
 import { Clipboard } from '@/service/models';
 import { deleteClipboardEntry, updateTimestampInClipboard } from '@/service/firebaseService';
 import { truncateContent } from '@/service/util';
 import { useAuth } from '@/auth/AuthContext';
 import NoItemsComponent from './NoItems';
 import Confirmation from './Confirmation';
+import { handleShare } from '@/service/shareService';
 
 interface ClipboardScreenProps {
     clipboardEntries: Clipboard[];

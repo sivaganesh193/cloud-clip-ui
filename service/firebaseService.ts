@@ -381,24 +381,28 @@ export const deleteSharedLink = async (sharedId: string): Promise<void> => {
     }
 };
 
-export const fetchSharedLink = async (sharedId: any): Promise<Clipboard | null> => {
+/**
+ * Fetches a shared link from the Firestore shared collection based on the link's code.
+ * 
+ * @param code - The code of the shared link to be fetched. The code should be a string.
+ * @returns A promise that resolves to the fetched shared link data if found, or null if no matching document is found.
+ */
+export const fetchSharedLink = async (code: string): Promise<Shared | null> => {
     try {
-        const sharedRef = doc(db, 'sharedLinks', sharedId.id);
-        const documentSnapshot = await getDoc(sharedRef);
-
-        if (!documentSnapshot.exists()) {
-            console.log("No matching documents found.");
+        // Create a query to find the shared link document by code
+        const q = query(collection(db, 'sharedLinks'), where('code', '==', code));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            console.log("No matching documents found for code:", code);
             return null;
         }
-
-        const clipboardData = documentSnapshot.data() as Shared;
-        const dataRef = doc(db, 'clipboards', clipboardData.clipboardId);
-        const dataSnapshot = (await getDoc(dataRef)).data() as Clipboard;
-
-        console.log("Fetched shared link:", dataSnapshot);
-        return dataSnapshot;
+        // Assuming there is only one document per code
+        const sharedData = querySnapshot.docs[0].data() as Shared;
+        console.log("Fetched shared link:", sharedData);
+        return sharedData;
     } catch (error) {
-        console.error('Error fetching shared link with clipboard content: ', error);
+        console.error('Error fetching shared link:', error);
         throw error;
     }
 };
+

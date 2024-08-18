@@ -1,8 +1,4 @@
 import * as Clipboard from 'expo-clipboard';
-import { Alert } from 'react-native';
-import { createClipboardEntry, createSharedLink } from './firebaseService';
-import * as Crypto from 'expo-crypto';
-import { getDomain } from './util';
 /**
  * Sets the provided text to the clipboard.
  * 
@@ -52,56 +48,5 @@ export const checkClipboardChanges = async (callback: (content: string) => void)
         }
     } catch (error) {
         console.error('Error checking clipboard:', error);
-    }
-};
-
-export const getSharedLinkURL = (code: string): string => {
-    const sharedLinkURL = `${getDomain()}/shared/${code}`;
-    console.log(sharedLinkURL);
-    return sharedLinkURL;
-}
-
-export const handleShare = async (content: string, user: any, deviceId: string, deviceName: string, showAlert: (message: string) => void, setTextToShare?: (text: string) => void) => {
-    if (content) {
-        try {
-            let clipRef: any;
-            let sharedRef: any;
-            if (user && deviceId) {
-                clipRef = await createClipboardEntry({
-                    userId: user.uid,
-                    deviceId: deviceId,
-                    deviceName: deviceName,
-                    content: content
-                });
-                sharedRef = await createSharedLink({
-                    userId: user.uid,
-                    clipboardId: clipRef,
-                    content: content,
-                    code: Crypto.randomUUID(), // will change url to smaller code
-                })
-            } else {
-                clipRef = await createClipboardEntry({
-                    userId: '',
-                    deviceId: '',
-                    content: content,
-                    deviceName: ''
-                });
-                sharedRef = await createSharedLink({
-                    userId: '',
-                    clipboardId: clipRef,
-                    content: content,
-                    code: Crypto.randomUUID(), // will change url to smaller code
-                })
-            }
-            const sharedLinkURL = getSharedLinkURL(sharedRef);
-            await setClipboard(sharedLinkURL, showAlert, "Shared link created and copied to clipboard.");
-            if (setTextToShare) setTextToShare('');
-        }
-        catch (error) {
-            console.error('Error creating shared link: ', error);
-        }
-    }
-    else {
-        showAlert("Please enter text to share");
     }
 };

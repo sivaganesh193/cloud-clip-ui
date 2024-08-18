@@ -9,7 +9,7 @@ import { fetchSharedLink } from '@/service/firebaseService';
 
 export default function Page() {
   // Get the route parameters
-  const id: string = useLocalSearchParams() as unknown as string;
+  const id: any = useLocalSearchParams();
   const navigation = useNavigation();
   const [data, setData] = useState("");
 
@@ -22,7 +22,7 @@ export default function Page() {
     const fetchData = async () => {
       if (id) {
         try {
-          const sharedLink = await fetchSharedLink(id);
+          const sharedLink = await fetchSharedLink(id.id);
           if (sharedLink) {
             setData(sharedLink.content || "");
           }

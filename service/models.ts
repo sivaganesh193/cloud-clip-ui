@@ -34,7 +34,7 @@ export interface Clipboard {
 // Interface for Shared Collection
 export interface Shared {
     id?: string;
-    clipboardId: string;
+    clipboardId?: string;
     content: string;
     userId: string;
     createdAt?: Timestamp;
