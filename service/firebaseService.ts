@@ -398,7 +398,6 @@ export const fetchSharedLink = async (code: string): Promise<Shared | null> => {
         }
         // Assuming there is only one document per code
         const sharedData = querySnapshot.docs[0].data() as Shared;
-        console.log("Fetched shared link:", sharedData);
         return sharedData;
     } catch (error) {
         console.error('Error fetching shared link:', error);

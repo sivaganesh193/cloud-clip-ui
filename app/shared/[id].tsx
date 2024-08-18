@@ -6,12 +6,26 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchSharedLink } from '@/service/firebaseService';
+import { setClipboard } from '@/service/clipboardService';
+import Alert from '@/components/Alert';
 
 export default function Page() {
   // Get the route parameters
   const id: any = useLocalSearchParams();
   const navigation = useNavigation();
   const [data, setData] = useState("");
+  const [alertVisible, setAlertVisible] = useState(false);
+	const [alertMessage, setAlertMessage] = useState('');
+
+  const showAlert = (message: string) => {
+		setAlertMessage(message);
+		setAlertVisible(true);
+		setTimeout(() => setAlertVisible(false), 3000); // Dismiss alert after 3 seconds
+	};
+
+  const handleCopy = (text: string) => {
+		setClipboard(text, showAlert, "Copied to clipboard"); // Pass the showAlert function
+	};
 
   useEffect(() => {
     navigation.setOptions({
@@ -26,7 +40,9 @@ export default function Page() {
           if (sharedLink) {
             setData(sharedLink.content || "");
           }
-
+          else {
+            showAlert('Link has expired or does not exist');            
+          }
         } catch (error) {
           console.error('Error fetching document: ', error);
         }
@@ -34,14 +50,15 @@ export default function Page() {
     };
 
     fetchData();
-  }, [id]);
+  }, []);
   return (
     <SafeAreaView style={styles.safeAreaLight}>
+			<Alert message={alertMessage} visible={alertVisible} />
       <Header navigation={navigation} />
       <ThemedView style={styles.container}>
         <View style={styles.headerWithButton}>
           <ThemedText type="subtitle" style={styles.text}>Your Text</ThemedText>
-          <TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} >
+          <TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data || '')}>
             <Ionicons name="clipboard-outline" size={24} color={'black'} />
             {Platform.OS === 'web' && (
               <Text style={[styles.copyButtonText, { color: 'black' }]}> Copy Text</Text>
