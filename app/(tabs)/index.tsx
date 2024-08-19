@@ -15,6 +15,7 @@ import { Clipboard } from '@/service/models';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import Alert from '@/components/Alert';
 import { Timestamp } from 'firebase/firestore';
+import Confirmation from '@/components/Confirmation';
 
 export default function Homepage() {
 	const colorScheme = useColorScheme();
@@ -29,6 +30,7 @@ export default function Homepage() {
 	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
 	const [alertVisible, setAlertVisible] = useState(false);
 	const [alertMessage, setAlertMessage] = useState('');
+	const [confirmationVisible, setConfirmationVisible] = useState(false);
 	const { user } = useAuth(); // Use AuthContext to get the user
 	const [data, setData] = useState<ClipboardData>({
 		content: null,
@@ -40,6 +42,19 @@ export default function Homepage() {
 	});
 	const navigation = useNavigation();
 	const { deviceId, deviceName } = useDeviceDetails();
+
+	const showConfirmation = () => {
+		setConfirmationVisible(true);
+	};
+
+	const handleCancel = () => {
+		setConfirmationVisible(false);
+	};
+
+	const handleRemove = () => {
+		setConfirmationVisible(false);
+		handleBulkDelete();
+	};
 
 	const showAlert = (message: string) => {
 		setAlertMessage(message);
@@ -65,7 +80,7 @@ export default function Homepage() {
 	};
 
 	const handleBulkDelete = async () => {
-		if(user){
+		if (user) {
 			deleteAllClipboardEntriesWithBatch(user.uid).then(async () => {
 				try {
 					showAlert('Deleted all clipboard entries');
@@ -73,8 +88,9 @@ export default function Homepage() {
 					showAlert('Failed to perform bulk delete');
 				}
 			});
+			setData({ content: '', timestamp: Timestamp.now() });
 		}
-    };
+	};
 
 	const refresh = (clipboards: Clipboard[]) => {
 		setClipboardEntries(clipboards);
@@ -127,6 +143,12 @@ export default function Homepage() {
 	return (
 		<>
 			<Alert message={alertMessage} visible={alertVisible} />
+			<Confirmation
+				message="Are you sure you want to proceed?"
+				visible={confirmationVisible}
+				onConfirm={handleRemove}
+				onCancel={handleCancel}
+			/>
 			<ScrollView
 				contentContainerStyle={{ flexGrow: 1 }}
 				showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
@@ -185,7 +207,7 @@ export default function Homepage() {
 								<ThemedView style={styles.container}>
 									<View style={styles.headerWithButton}>
 										<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries ({clipboardEntries.length})</ThemedText>
-										<TouchableOpacity style={styles.copyButton} onPress={() => handleBulkDelete()}>
+										<TouchableOpacity style={styles.copyButton} onPress={() => showConfirmation()}>
 											<Ionicons name="trash-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
 											{Platform.OS === 'web' && (
 												<Text style={[styles.copyButtonText, { color: isDarkMode ? 'black' : 'black' }]}> Delete all Entries</Text>
