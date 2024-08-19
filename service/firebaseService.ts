@@ -389,6 +389,8 @@ export const deleteSharedLink = async (sharedId: string): Promise<void> => {
  */
 export const fetchSharedLink = async (code: string): Promise<Shared | null> => {
     try {
+        console.log("code",code);
+        
         // Create a query to find the shared link document by code
         const q = query(collection(db, 'sharedLinks'), where('code', '==', code));
         const querySnapshot = await getDocs(q);

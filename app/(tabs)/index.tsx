@@ -88,7 +88,7 @@ export default function Homepage() {
 					showAlert('Failed to perform bulk delete');
 				}
 			});
-			setData({ content: '', timestamp: Timestamp.now() });
+			// setData({ content: '', timestamp: Timestamp.now() });
 		}
 	};
 

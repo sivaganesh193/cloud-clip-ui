@@ -140,7 +140,7 @@ export default function SharedLinks() {
 										data={sharedLinks}
 										keyExtractor={(item) => item.id || Crypto.randomUUID()}
 										renderItem={({ item }) => (
-											<TouchableOpacity onPress={() => router.push(`/shared/${item.id || ''}`)}>
+											<TouchableOpacity onPress={() => router.push(`/shared/${item.code || ''}`)}>
 												<View style={styles.itemContainerLight}>
 													<View style={styles.textContainer}>
 														<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
