@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: Platform.OS === 'web' ? 0 : 18,
+        paddingTop: Platform.OS === 'web' ? 0 : 30,
     },
     iconsContainer: {
         flexDirection: 'row',

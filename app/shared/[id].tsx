@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   safeAreaLight: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'web' ? 0 : 18,
+    paddingTop: Platform.OS === 'web' ? 0 : 30,
   },
   scrollContainer: {
 

@@ -108,7 +108,7 @@ export default function SharedLinks() {
 			>
 				<SafeAreaView style={styles.safeArea}>
 					<Header navigation={navigation} />
-					<ThemedView style={styles.containerDark}>
+					<ThemedView style={styles.containerLight}>
 						<ThemedText type="title" style={styles.heading}>
 							Paste your text here and click on Share to easily share text with friends!
 						</ThemedText>
@@ -131,7 +131,7 @@ export default function SharedLinks() {
 						</TouchableOpacity>
 					</ThemedView>
 					{user && (
-						<ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
+						<ThemedView style={styles.containerLight}>
 							<ThemedText type="subtitle" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
 							<Text>{'\n'}</Text>
 							<View style={styles.flatListContainer}>
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#fff',
-		paddingTop: Platform.OS === 'web' ? 0 : 18,
+		paddingTop: Platform.OS === 'web' ? 0 : 30,
 	},
 	flatListContainer: {
 		height: 300,
@@ -189,17 +189,12 @@ const styles = StyleSheet.create({
 		padding: 10,
 	},
 	containerLight: {
-		// flex: 1,
 		backgroundColor: '#fff',
 		padding: 16,
-		// borderRadius: 16,
+    marginLeft: Platform.OS === 'web' ? 20: 0,
+    marginRight: Platform.OS === 'web' ? 20: 0,
 	},
-	containerDark: {
-		// flex: 1,
-		backgroundColor: '#fff',
-		padding: 16,
-		// borderRadius: 16,
-	},
+	
 	listContent: {
 		paddingBottom: 16,
 	},
@@ -262,6 +257,8 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		color: '#000',
 		marginBottom: 16,
+    width: Platform.OS === 'web'? '80%': '100%',
+    alignSelf: 'center'
 	},
 	inputDark: {
 		height: 40,
@@ -272,6 +269,8 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		color: '#000',
 		marginBottom: 16,
+    width: Platform.OS === 'web'? '80%': '100%',
+    alignSelf: 'center'
 	},
 	shareButton: {
 		flexDirection: 'row',

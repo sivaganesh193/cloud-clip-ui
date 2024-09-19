@@ -229,13 +229,16 @@ const LoginPopup = ({ isVisible, onClose, onSuccess }: { isVisible: boolean; onC
                   )}
 
                   <View style={styles.buttonRow}>
+                    <TouchableOpacity style={styles.forgotPasswordButton}
+                    // onPress={() => Alert.alert('Signin with Google')}
+                    >
+                      {/* <MaterialCommunityIcons name="google" size={24} color="black" />
+                      <Text style={styles.forgotPasswordText}>Signin with Google</Text> */}
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => setIsForgotPasswordMode(true)}>
                       <Octicons name="question" size={24} color="black" style={styles.forgotPasswordIcon} />
                       <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => Alert.alert('Signin with Google')}>
-                      <MaterialCommunityIcons name="google" size={24} color="black" />
-                      <Text style={styles.forgotPasswordText}>Signin with Google</Text>
                     </TouchableOpacity>
                   </View>
                 </>
