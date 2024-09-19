@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Platform, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -24,6 +24,7 @@ export default function SharedLinks() {
 	const isDarkMode = colorScheme === 'dark';
 	const navigation = useNavigation();
 	const [textToShare, setTextToShare] = useState("");
+	const [retrieveText, setRetrieveText] = useState("");
 	const [sharedLinks, setSharedLinks] = useState<Shared[]>([]); // Define the type for the state
 	const { deviceId, deviceName } = useDeviceDetails();
 	const [confirmationVisible, setConfirmationVisible] = useState(false);
@@ -94,7 +95,7 @@ export default function SharedLinks() {
 	}
 	return (
 		<>
-			<Alert message={alertMessage} visible={alertVisible}/>
+			<Alert message={alertMessage} visible={alertVisible} />
 			<Confirmation
 				message="Are you sure you want to proceed?"
 				visible={confirmationVisible}
@@ -103,36 +104,62 @@ export default function SharedLinks() {
 			/>
 			<ScrollView
 				contentContainerStyle={{ flexGrow: 1 }}
-				showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
-				horizontal={false} // Ensures horizontal scrolling is disabled
+				showsVerticalScrollIndicator={false}
+				horizontal={false}
 			>
 				<SafeAreaView style={styles.safeArea}>
 					<Header navigation={navigation} />
 					<ThemedView style={styles.containerLight}>
-						<ThemedText type="title" style={styles.heading}>
+						<ThemedText type="defaultSemiBold" style={styles.heading}>
 							Paste your text here and click on Share to easily share text with friends!
 						</ThemedText>
-
-						<TextInput
-							style={isDarkMode ? styles.inputDark : styles.inputLight}
-							placeholder="Enter text to share"
-							placeholderTextColor={isDarkMode ? '#000' : '#000'}
-							value={textToShare}
-							onChangeText={(text) => setTextToShare(text)}
-						/>
-						<TouchableOpacity
-							style={styles.shareButton}
-							onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
-						>
-							<Ionicons name="share-outline" size={24} color="white" />
-							<ThemedText type="default" style={styles.shareButtonText} >
-								Share
-							</ThemedText>
-						</TouchableOpacity>
+						<ThemedView style={[{ flexDirection: 'row', alignItems: 'center', gap: 20 }]}>
+							<TextInput
+								style={styles.inputLight}
+								placeholder="Enter text to share"
+								placeholderTextColor={isDarkMode ? '#000' : '#000'}
+								value={textToShare}
+								onChangeText={(text) => setTextToShare(text)}
+							/>
+							<TouchableOpacity
+								style={styles.tertiaryButton}
+								onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
+							>
+								<Ionicons name="share-social-outline" size={24} color={'black'} />
+								<ThemedText type="default" style={styles.tertiaryButtonText} >
+									Share
+								</ThemedText>
+							</TouchableOpacity>
+						</ThemedView>
+					</ThemedView>
+					<ThemedView style={[styles.containerLight]}>
+						<ThemedText type="defaultSemiBold" lightColor='black' darkColor='black' style={styles.heading}>Retrieve Text:</ThemedText>
+						<ThemedView style={[{ flexDirection: 'row', alignItems: 'center', gap: 20 }]}>
+							<TextInput
+								style={styles.inputLight2}
+								placeholder="Enter the code here to retrieve your text"
+								placeholderTextColor={isDarkMode ? '#000' : '#000'}
+								value={retrieveText}
+								onChangeText={(text) => setRetrieveText(text)}
+							/>
+							<TouchableOpacity
+								style={styles.tertiaryButton}
+								onPress={() => {
+									if (!retrieveText.trim()) {
+										showAlert("Please enter a code to retrieve your text.");
+									} else {
+										router.push(`/shared/${retrieveText}`);
+									}
+								}}
+							>
+								<Ionicons name="share-outline" size={24} color="black" />
+								<ThemedText type="default" style={styles.tertiaryButtonText}>Retrieve</ThemedText>
+							</TouchableOpacity>
+						</ThemedView>
 					</ThemedView>
 					{user && (
 						<ThemedView style={styles.containerLight}>
-							<ThemedText type="subtitle" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
+							<ThemedText type="defaultSemiBold" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
 							<Text>{'\n'}</Text>
 							<View style={styles.flatListContainer}>
 								{sharedLinks.length > 0 ? (
@@ -191,10 +218,10 @@ const styles = StyleSheet.create({
 	containerLight: {
 		backgroundColor: '#fff',
 		padding: 16,
-    marginLeft: Platform.OS === 'web' ? 20: 0,
-    marginRight: Platform.OS === 'web' ? 20: 0,
+		marginLeft: Platform.OS === 'web' ? 20 : 0,
+		marginRight: Platform.OS === 'web' ? 20 : 0,
 	},
-	
+
 	listContent: {
 		paddingBottom: 16,
 	},
@@ -244,9 +271,9 @@ const styles = StyleSheet.create({
 	},
 	heading: {
 		marginBottom: 16,
-		fontSize: 18,
-		color: '#000',
-		textAlign: 'center',
+		// fontSize: 16,
+		// color: '#000',
+		// textAlign: 'center',
 	},
 	inputLight: {
 		height: 40,
@@ -257,10 +284,9 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		color: '#000',
 		marginBottom: 16,
-    width: Platform.OS === 'web'? '80%': '100%',
-    alignSelf: 'center'
+		width: Platform.OS === 'web' ? '70%' : '100%',
 	},
-	inputDark: {
+	inputLight2: {
 		height: 40,
 		borderColor: '#000',
 		borderWidth: 1,
@@ -269,23 +295,41 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		color: '#000',
 		marginBottom: 16,
-    width: Platform.OS === 'web'? '80%': '100%',
-    alignSelf: 'center'
+		width: '70%',
+		alignSelf: 'center'
 	},
 	shareButton: {
 		flexDirection: 'row',
 		justifyContent: 'center',
 		alignItems: 'center',
 		paddingVertical: 5,
-		width: 200,
+		width: 150,
 		alignSelf: 'center',
 		borderRadius: 8,
 		backgroundColor: 'black',
+		marginBottom: 15
 	},
 	shareButtonText: {
 		color: '#fff',
 		fontSize: 16,
-		// fontWeight: 'bold',
 		marginLeft: 8,
 	},
+	tertiaryButton: {
+		flexDirection: 'row',
+		width: 150,
+		marginBottom: 15,
+		textAlign: 'left',
+		borderRadius: 8,
+		backgroundColor: '#fff',
+	},
+	tertiaryButtonText: {
+		color: '#000',
+		fontSize: 16,
+		marginLeft: 8,
+		fontWeight: 'bold',
+		textDecorationColor: 'black',
+		textDecorationStyle: 'solid',
+		textDecorationLine: 'underline'
+
+	}
 });

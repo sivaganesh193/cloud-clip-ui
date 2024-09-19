@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { SafeAreaView, Text, StyleSheet, Platform, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
+import { SafeAreaView, Text, StyleSheet, Platform, TextInput, TouchableOpacity, View, ScrollView, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import { ThemedText } from '@/components/ThemedText';
@@ -15,17 +15,18 @@ export default function Page() {
   const navigation = useNavigation();
   const [data, setData] = useState("");
   const [alertVisible, setAlertVisible] = useState(false);
-	const [alertMessage, setAlertMessage] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [loading, setLoading] = useState(true); // Loader state
 
   const showAlert = (message: string) => {
-		setAlertMessage(message);
-		setAlertVisible(true);
-		setTimeout(() => setAlertVisible(false), 3000); // Dismiss alert after 3 seconds
-	};
+    setAlertMessage(message);
+    setAlertVisible(true);
+    setTimeout(() => setAlertVisible(false), 3000); // Dismiss alert after 3 seconds
+  };
 
   const handleCopy = (text: string) => {
-		setClipboard(text, showAlert, "Copied to clipboard"); // Pass the showAlert function
-	};
+    setClipboard(text, showAlert, "Copied to clipboard"); // Pass the showAlert function
+  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -35,25 +36,28 @@ export default function Page() {
     // Fetch data from Firestore
     const fetchData = async () => {
       if (id) {
+        setLoading(true); // Start loading
         try {
           const sharedLink = await fetchSharedLink(id.id);
           if (sharedLink) {
             setData(sharedLink.content || "");
-          }
-          else {
+          } else {
             showAlert('Link has expired or does not exist');            
           }
         } catch (error) {
           console.error('Error fetching document: ', error);
+        } finally {
+          setLoading(false); // Stop loading
         }
       }
     };
 
     fetchData();
   }, []);
+
   return (
     <SafeAreaView style={styles.safeAreaLight}>
-			<Alert message={alertMessage} visible={alertVisible} />
+      <Alert message={alertMessage} visible={alertVisible} />
       <Header navigation={navigation} />
       <ThemedView style={styles.container}>
         <View style={styles.headerWithButton}>
@@ -65,21 +69,24 @@ export default function Page() {
             )}
           </TouchableOpacity>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.textBox}>
-            <TextInput
-              style={[styles.text, styles.textInput]}
-              value={data}
-              onChangeText={setData}
-              multiline={true}
-              editable={false}
-            />
-          </View>
-        </ScrollView>
+        {loading ? ( 
+          <ActivityIndicator size="large" color="#000" style={styles.loader} />
+        ) : (
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.textBox}>
+              <TextInput
+                style={[styles.text, styles.textInput]}
+                value={data}
+                onChangeText={setData}
+                multiline={true}
+                editable={false}
+              />
+            </View>
+          </ScrollView>
+        )}
       </ThemedView>
-    </SafeAreaView>);
-
-
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -88,15 +95,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingTop: Platform.OS === 'web' ? 0 : 30,
   },
-  scrollContainer: {
-
-  },
+  scrollContainer: {},
   container: {
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
     overflow: 'hidden',
-    flex: 1
+    flex: 1,
   },
   headerWithButton: {
     flexDirection: 'row',
@@ -115,19 +120,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   text: {
-    color: '#000'
+    color: '#000',
   },
   textBox: {
     flex: 1,
-    borderWidth: 1,         // Thickness of the border
-    borderColor: '#000',    // Color of the border
-    borderRadius: 0         // Optional: Rounds the corners of the border
+    borderWidth: 1, 
+    borderColor: '#000',
+    borderRadius: 0, 
   },
   textInput: {
-    minHeight: 180, // Ensures a minimum height but allows for expansion
-    flex: 1, // Ensures the TextInput takes the full height and width of the container
-    textAlignVertical: 'top', // Aligns text at the top if multiline
-    padding: 10, // Removes default padding to match the ThemedText style
+    minHeight: 180,
+    flex: 1, 
+    textAlignVertical: 'top', 
+    padding: 10, 
+  },
+  loader: {
+    flex: 0.5 ,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
-

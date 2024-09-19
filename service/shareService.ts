@@ -1,8 +1,7 @@
 import { setClipboard } from "./clipboardService";
 import { createClipboardEntry, createSharedLink } from "./firebaseService";
 import { getDomain } from "./util";
-import * as Crypto from 'expo-crypto';
-
+import { nanoid } from 'nanoid';
 
 export const getSharedLinkURL = (code: string): string => {
     console.log(code);
@@ -17,7 +16,7 @@ export const handleShare = async (content: string, user: any, deviceId: string, 
             let clipRef: any;
             let sharedRef: any;
             console.log(user,deviceId,deviceName);
-            const code : string = Crypto.randomUUID();
+            const code : string = nanoid(5);
             if (user) {
                 clipRef = await createClipboardEntry({
                     userId: user.uid,
@@ -29,13 +28,13 @@ export const handleShare = async (content: string, user: any, deviceId: string, 
                     userId: user.uid,
                     clipboardId: clipRef,
                     content: content,
-                    code: code, // will change url to smaller code
+                    code: code, 
                 })
             } else {
                 sharedRef = await createSharedLink({
                     userId: '',
                     content: content,
-                    code: code, // will change url to smaller code
+                    code: code, 
                 })
             }
             const sharedLinkURL = getSharedLinkURL(code);

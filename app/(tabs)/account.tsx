@@ -216,7 +216,7 @@ export default function Account() {
                     <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                         {user ? (
                             <View style={styles.content}>
-                                <ThemedText type="title" style={styles.text}>Your Account</ThemedText>
+                                <ThemedText type="subtitle">Your Account</ThemedText>
                                 <Text>{'\n'}</Text>
                                 <View style={styles.fieldContainer}>
                                     <ThemedText type="subtitle" style={styles.text}>Email</ThemedText>
@@ -304,6 +304,7 @@ const styles = StyleSheet.create({
         marginLeft: 10, // Add spacing between icons
     },
     text: {
+        fontSize: 16,
         color: '#000',
     },
     textContainer: {

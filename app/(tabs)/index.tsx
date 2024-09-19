@@ -163,7 +163,7 @@ export default function Homepage() {
 							<>
 								<ThemedView style={styles.container}>
 									<View style={styles.headerWithButton}>
-										<ThemedText type="subtitle" style={styles.text}>Your latest copied text</ThemedText>
+										<ThemedText type="defaultSemiBold" style={styles.text}>Your latest copied text</ThemedText>
 										<View style={styles.buttonContainer}>
 											<TouchableOpacity style={[styles.copyButton, { marginLeft: 10 }]} onPress={() => handleCopy(data.content || '')}>
 												<Ionicons name="clipboard-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
@@ -184,7 +184,7 @@ export default function Homepage() {
 								</ThemedView>
 								<ThemedView style={styles.container}>
 									<View style={styles.headerWithButton}>
-										<ThemedText type="subtitle" style={styles.text}>Save to clipboard</ThemedText>
+										<ThemedText type="defaultSemiBold" style={styles.text}>Save to clipboard</ThemedText>
 										<View style={styles.buttonContainer}>
 											<TouchableOpacity style={styles.copyButton} onPress={() => handleSave(saveTextData)}>
 												<Ionicons name="save-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
@@ -206,7 +206,7 @@ export default function Homepage() {
 								</ThemedView>
 								<ThemedView style={styles.container}>
 									<View style={styles.headerWithButton}>
-										<ThemedText type="subtitle" style={styles.text}>Your Clipboard Entries ({clipboardEntries.length})</ThemedText>
+										<ThemedText type="defaultSemiBold" style={styles.text}>Your Clipboard Entries ({clipboardEntries.length})</ThemedText>
 										<TouchableOpacity style={styles.copyButton} onPress={() => showConfirmation()}>
 											<Ionicons name="trash-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
 											{Platform.OS === 'web' && (
@@ -237,6 +237,7 @@ const styles = StyleSheet.create({
 	centerContainer: {
 		backgroundColor: '#fff',
 		padding: Platform.OS === 'web' ? 16 : 5,
+		paddingTop: 0,
 		borderRadius: 16,
 	},
 	container: {
@@ -354,7 +355,7 @@ const styles = StyleSheet.create({
 	},
 	copyButtonText: {
 		marginLeft: 5,
-		fontWeight: 'bold',
+		fontWeight: 'medium',
 	},
 	scrollView: {
 		flex: 1,

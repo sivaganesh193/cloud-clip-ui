@@ -74,9 +74,8 @@ const styles = StyleSheet.create({
         marginVertical: 16, // Added vertical margin for better spacing
     },
     image: {
-        width: '100%', // Make image responsive
-        height: undefined,
-        aspectRatio: 1, // Maintain aspect ratio
+        width: 100,
+        height: 100
     }
 });
 
