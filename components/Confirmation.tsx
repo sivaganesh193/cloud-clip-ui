@@ -1,41 +1,46 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+
+interface ButtonConfig {
+    label: string;
+    onPress: () => void;
+    style?: object;
+}
 
 interface ConfirmationProps {
     message: string;
+    subtitle: string;
     visible: boolean;
-    onConfirm: () => void;
-    onCancel: () => void;
+    buttons: ButtonConfig[];
 }
 
-const Confirmation: React.FC<ConfirmationProps> = ({ message, visible, onConfirm, onCancel }) => {
+const Confirmation: React.FC<ConfirmationProps> = ({ message, subtitle, visible, buttons }) => {
     return (
         <Modal
             transparent={true}
             visible={visible}
             animationType="fade"
-            onRequestClose={onCancel} // Handle back button on Android
+            onRequestClose={() => {
+                // Handle back button on Android, consider passing an onCancel function if needed
+                if (buttons.find(button => button.label === 'Cancel')) {
+                    buttons.find(button => button.label === 'Cancel')?.onPress();
+                }
+            }}
         >
             <View style={styles.overlay}>
                 <View style={styles.container}>
                     <Text style={styles.message}>{message}</Text>
+                    <Text style={styles.subtitle}>{subtitle}</Text>
                     <View style={styles.buttonsContainer}>
-                        <TouchableOpacity
-                            style={[styles.button, styles.buttonCancel]}
-                            onPress={() => {
-                                if (onCancel) onCancel();
-                            }}
-                        >
-                            <Text style={styles.buttonText}>Cancel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.button, styles.buttonConfirm]}
-                            onPress={() => {
-                                if (onConfirm) onConfirm();
-                            }}
-                        >
-                            <Text style={styles.buttonText}>Yes</Text>
-                        </TouchableOpacity>
+                        {buttons.map((button, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={[styles.button, button.style]}
+                                onPress={button.onPress}
+                            >
+                                <Text style={styles.buttonText}>{button.label}</Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
                 </View>
             </View>
@@ -48,7 +53,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     container: {
         backgroundColor: '#fff',
@@ -59,6 +64,11 @@ const styles = StyleSheet.create({
     },
     message: {
         fontSize: 18,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    subtitle: {
+        fontSize: 14,
         marginBottom: 20,
         textAlign: 'center',
     },
@@ -73,14 +83,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         alignItems: 'center',
     },
-    buttonCancel: {
-        backgroundColor: 'black', // Black background for Cancel button
-    },
-    buttonConfirm: {
-        backgroundColor: 'black', // Black background for Yes button
-    },
     buttonText: {
-        color: 'white', // White text color
+        color: 'white',
         fontSize: 16,
     },
 });

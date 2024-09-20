@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-import { View } from 'react-native';
 
 // Define the shape of the AuthContext
 interface AuthContextProps {

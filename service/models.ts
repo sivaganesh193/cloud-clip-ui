@@ -21,7 +21,7 @@ export interface Device {
 }
 
 // Interface for Clipboards Collection
-export interface Clipboard {
+export interface CustomClipboard {
     id?: string;
     userId: string;
     deviceId: string;

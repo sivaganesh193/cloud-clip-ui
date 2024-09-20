@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Header from '@/components/Header';
 import { router, useNavigation } from 'expo-router';
-import { deleteSharedLink, listenToSharedLinks } from '@/service/firebaseService';
+import { createClipboardEntry, createSharedLink, deleteAllSharedLinks, deleteSharedLink, listenToSharedLinks } from '@/service/firebaseService';
 import { useAuth } from '@/auth/AuthContext';
 import { truncateContent } from '@/service/util';
 import { Shared } from '@/service/models';
@@ -17,7 +17,8 @@ import useDeviceDetails from '@/hook/useDeviceDetails';
 import NoItemsComponent from '@/components/NoItems';
 import Alert from '@/components/Alert';
 import Confirmation from '@/components/Confirmation';
-import { getSharedLinkURL, handleShare } from '@/service/shareService';
+import { generateNanoID, getSharedLinkURL, handleShare } from '@/service/shareService';
+import * as Clipboard from 'expo-clipboard';
 
 export default function SharedLinks() {
 	const colorScheme = useColorScheme();
@@ -31,6 +32,12 @@ export default function SharedLinks() {
 	const [itemToRemoveId, setItemToRemoveId] = useState("");
 	const [alertVisible, setAlertVisible] = useState(false);
 	const [alertMessage, setAlertMessage] = useState('');
+	const [shareConfirmationVisible, setShareConfirmationVisible] = useState(false);
+	const [shareWithoutNewConfirmationVisible, setShareWithoutNewConfirmationVisible] = useState(false);
+	const [itemToShare, setItemToShare] = useState("");
+	const [sharedLink, setSharedLink] = useState<string | null>(null);
+	const [sharedCode, setSharedCode] = useState<string | null>(null);
+	const [deleteAllConfirmationVisible, setDeleteAllConfirmationVisible] = useState(false);
 
 	const showAlert = (message: string) => {
 		setAlertMessage(message);
@@ -46,8 +53,10 @@ export default function SharedLinks() {
 	};
 
 	const handleShareLink = (code: string) => {
-		const url = getSharedLinkURL(code);
-		setClipboard(url, showAlert, "Link copied to clipboard."); // Pass the showAlert function
+		setSharedCode(code);
+		const sharedLinkURL = getSharedLinkURL(sharedCode || '');
+		setSharedLink(sharedLinkURL);
+		setShareWithoutNewConfirmationVisible(true);
 	};
 
 	const calculateTimeLeft = (expiryAt: Timestamp | null): string => {
@@ -68,19 +77,14 @@ export default function SharedLinks() {
 	useEffect(() => {
 		const initialize = async () => {
 			try {
-				// Only set up the listener if user and deviceId are available
 				if (user && deviceId) {
-					// Define unsubscribe function
 					const unsubscribe = listenToSharedLinks(user.uid, setSharedLinks);
-
-					// Cleanup the listener on unmount
 					return () => unsubscribe();
 				}
 			} catch (error) {
 				console.error('Error during initialization:', error);
 			}
 		};
-		// Run the initialize function
 		initialize();
 	}, [user, deviceId]);
 
@@ -89,18 +93,147 @@ export default function SharedLinks() {
 		setConfirmationVisible(false);
 	};
 
+	const handleShareCancel = () => {
+		setShareConfirmationVisible(false);
+	}
+
 	const showConfirmation = (item: any) => {
 		setConfirmationVisible(true);
 		setItemToRemoveId(item.id);
 	}
+
+	const showShareConfirmation = (content: string) => {
+		const code: string = generateNanoID();
+		const generatedLink = getSharedLinkURL(code);
+		setSharedCode(code);
+		setSharedLink(generatedLink);
+		setShareConfirmationVisible(true);
+		setItemToShare(content);
+	};
+
+	const handleCopy = async () => {
+		let clipRef: any;
+		let sharedRef: any;
+		console.log(user, deviceId, deviceName);
+		if (user) {
+			clipRef = await createClipboardEntry({
+				userId: user.uid,
+				deviceId: deviceId,
+				deviceName: deviceName,
+				content: itemToShare
+			});
+			sharedRef = await createSharedLink({
+				userId: user.uid,
+				clipboardId: clipRef,
+				content: itemToShare,
+				code: sharedCode || '',
+			})
+		}
+		else {
+			sharedRef = await createSharedLink({
+				userId: '',
+				content: itemToShare,
+				code: sharedCode || '',
+			})
+		}
+	}
+
+	const handleCopyLink = async () => {
+		if (itemToShare && sharedLink) {
+			await handleCopy();
+			const sharedLinkURL = getSharedLinkURL(sharedCode || '');
+			await setClipboard(sharedLinkURL, showAlert, "Shared link created and copied to clipboard.");
+			setShareConfirmationVisible(false);
+			setTextToShare('');
+		} else {
+			showAlert("An unexpected error occured!");
+		}
+	};
+
+	const handleCopyCode = async () => {
+		if (itemToShare && sharedLink) {
+			await handleCopy();
+			setClipboard(sharedCode, showAlert, "Shared link created and the code to share is copied to clipboard.");
+			setShareConfirmationVisible(false);
+			setTextToShare('');
+		} else {
+			showAlert("An unexpected error occured!");
+		}
+	};
+
+	const handleCopyLinkWithoutNewLink = async () => {
+		await Clipboard.setString(sharedLink || '');
+		setShareWithoutNewConfirmationVisible(false);
+		showAlert('Link copied to clipoard.');
+	}
+
+	const handleCopyCodeWithoutNewLink = async () => {
+		await Clipboard.setString(sharedCode || '');
+		setShareWithoutNewConfirmationVisible(false);
+		showAlert('Code copied to clipoard.');
+	}
+
+	const handleShareCancelWithoutNewLink = () => {
+		setShareWithoutNewConfirmationVisible(false);
+	}
+
+	const showDeleteAllConfirmation = () => {
+		setDeleteAllConfirmationVisible(true);
+	};
+
+	const handleDeleteAll = async () => {
+		try {
+			await deleteAllSharedLinks(user?.uid || '');
+			setSharedLinks([]); // Clear the shared links on success
+			setDeleteAllConfirmationVisible(false);
+			showAlert("All shared links have been deleted successfully."); // Optionally show a success message
+		} catch (error) {
+			console.error("Error deleting all shared links:", error);
+			showAlert("An error occurred while deleting shared links."); // Handle the error
+		}
+	};
+
+
 	return (
 		<>
 			<Alert message={alertMessage} visible={alertVisible} />
 			<Confirmation
 				message="Are you sure you want to proceed?"
+				subtitle=''
 				visible={confirmationVisible}
-				onConfirm={handleRemove}
-				onCancel={handleCancel}
+				buttons={[
+					{ label: 'No', onPress: handleCancel, style: { backgroundColor: 'black' } },
+					{ label: 'Yes', onPress: handleRemove, style: { backgroundColor: 'black' } },
+				]}
+			/>
+			<Confirmation
+				message={`Use this link or code for quick share!\n`}
+				subtitle={`Link: ${sharedLink || ''}\nCode: ${sharedCode || ''}`}
+				visible={shareConfirmationVisible}
+				buttons={[
+					{ label: 'Copy Link', onPress: handleCopyLink, style: { backgroundColor: 'black' } },
+					{ label: 'Copy Code', onPress: handleCopyCode, style: { backgroundColor: 'black' } },
+					{ label: 'Cancel', onPress: handleShareCancel, style: { backgroundColor: 'red' } },
+				]}
+			/>
+			<Confirmation
+				message={`Use this link or code for quick share!\n`}
+				subtitle={`Link: ${sharedLink || ''}\nCode: ${sharedCode || ''}`}
+				visible={shareWithoutNewConfirmationVisible}
+				buttons={[
+					{ label: 'Copy Link', onPress: handleCopyLinkWithoutNewLink, style: { backgroundColor: 'black' } },
+					{ label: 'Copy Code', onPress: handleCopyCodeWithoutNewLink, style: { backgroundColor: 'black' } },
+					{ label: 'Cancel', onPress: handleShareCancelWithoutNewLink, style: { backgroundColor: 'red' } },
+				]}
+			/>
+			<Confirmation
+				message="Are you sure you want to delete all shared links?"
+				subtitle=''
+				visible={deleteAllConfirmationVisible}
+				buttons={[
+					{ label: 'Cancel', onPress: () => setDeleteAllConfirmationVisible(false), style: { backgroundColor: 'black' } },
+					{ label: 'Delete All', onPress: handleDeleteAll, style: { backgroundColor: 'black' } },
+				]}
 			/>
 			<ScrollView
 				contentContainerStyle={{ flexGrow: 1 }}
@@ -123,7 +256,15 @@ export default function SharedLinks() {
 							/>
 							<TouchableOpacity
 								style={styles.tertiaryButton}
-								onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
+								// onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
+								onPress={() => {
+									// Trigger confirmation before sharing
+									if (textToShare.trim()) {
+										showShareConfirmation(textToShare);
+									} else {
+										showAlert("Please enter text to share.");
+									}
+								}}
 							>
 								<Ionicons name="share-social-outline" size={24} color={'black'} />
 								<ThemedText type="default" style={styles.tertiaryButtonText} >
@@ -149,6 +290,7 @@ export default function SharedLinks() {
 										showAlert("Please enter a code to retrieve your text.");
 									} else {
 										router.push(`/shared/${retrieveText}`);
+										setRetrieveText('');
 									}
 								}}
 							>
@@ -159,7 +301,20 @@ export default function SharedLinks() {
 					</ThemedView>
 					{user && (
 						<ThemedView style={styles.containerLight}>
-							<ThemedText type="defaultSemiBold" lightColor='black' darkColor='black'>Recent Shared Links: </ThemedText>
+							<ThemedView style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+								<ThemedText type="defaultSemiBold" lightColor='black' darkColor='black'>
+									Recent Shared Links:
+								</ThemedText>
+								<TouchableOpacity onPress={() => showDeleteAllConfirmation()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+									<Ionicons name="trash-outline" size={24} color={isDarkMode ? 'black' : 'black'} />
+									{Platform.OS === 'web' && (
+										<Text style={[{ color: isDarkMode ? 'black' : 'black', marginLeft: 5 }]}>
+											Delete all Entries
+										</Text>
+									)}
+								</TouchableOpacity>
+							</ThemedView>
+
 							<Text>{'\n'}</Text>
 							<View style={styles.flatListContainer}>
 								{sharedLinks.length > 0 ? (
@@ -189,14 +344,15 @@ export default function SharedLinks() {
 											</TouchableOpacity>
 										)}
 										contentContainerStyle={styles.listContent}
-									/>) : (
-									<NoItemsComponent></NoItemsComponent>
+									/>
+								) : (
+									<NoItemsComponent />
 								)}
 							</View>
 						</ThemedView>
 					)}
 				</SafeAreaView>
-			</ScrollView>
+			</ScrollView >
 		</>
 	);
 }
@@ -221,7 +377,6 @@ const styles = StyleSheet.create({
 		marginLeft: Platform.OS === 'web' ? 20 : 0,
 		marginRight: Platform.OS === 'web' ? 20 : 0,
 	},
-
 	listContent: {
 		paddingBottom: 16,
 	},
@@ -271,9 +426,7 @@ const styles = StyleSheet.create({
 	},
 	heading: {
 		marginBottom: 16,
-		// fontSize: 16,
-		// color: '#000',
-		// textAlign: 'center',
+		color: '#000',
 	},
 	inputLight: {
 		height: 40,

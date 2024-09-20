@@ -11,7 +11,7 @@ import { useAuth } from '@/auth/AuthContext'; // Import AuthContext
 import ClipboardScreen from '@/components/Clipboard';
 import { getClipboard, setClipboard } from '@/service/clipboardService';
 import { createClipboardEntry, deleteAllClipboardEntriesWithBatch, listenToClipboardEntries } from '@/service/firebaseService';
-import { Clipboard } from '@/service/models';
+import { CustomClipboard } from '@/service/models';
 import useDeviceDetails from '@/hook/useDeviceDetails';
 import Alert from '@/components/Alert';
 import { Timestamp } from 'firebase/firestore';
@@ -27,7 +27,7 @@ export default function Homepage() {
 	}
 
 	const [saveTextData, setSaveTextData] = useState("");
-	const [clipboardEntries, setClipboardEntries] = useState<Clipboard[]>([]);
+	const [clipboardEntries, setClipboardEntries] = useState<CustomClipboard[]>([]);
 	const [alertVisible, setAlertVisible] = useState(false);
 	const [alertMessage, setAlertMessage] = useState('');
 	const [confirmationVisible, setConfirmationVisible] = useState(false);
@@ -92,7 +92,7 @@ export default function Homepage() {
 		}
 	};
 
-	const refresh = (clipboards: Clipboard[]) => {
+	const refresh = (clipboards: CustomClipboard[]) => {
 		setClipboardEntries(clipboards);
 		console.log(clipboards.length);
 		if (clipboards.length !== 0) {
@@ -145,9 +145,12 @@ export default function Homepage() {
 			<Alert message={alertMessage} visible={alertVisible} />
 			<Confirmation
 				message="Are you sure you want to proceed?"
+				subtitle=''
 				visible={confirmationVisible}
-				onConfirm={handleRemove}
-				onCancel={handleCancel}
+				buttons={[
+					{ label: 'No', onPress: handleCancel, style: { backgroundColor: 'black' } },
+					{ label: 'Yes', onPress: handleRemove, style: { backgroundColor: 'black' } },
+				]}
 			/>
 			<ScrollView
 				contentContainerStyle={{ flexGrow: 1 }}
@@ -174,12 +177,12 @@ export default function Homepage() {
 										</View>
 									</View>
 									<View style={styles.textBox}>
-										<TextInput
-											style={[styles.text, styles.textInput]}
-											value={data.content || ''}
-											multiline={true}
-											editable={false}
-										/>
+											<TextInput
+												style={[styles.text, styles.textInput]}
+												value={data.content || ''}
+												multiline={true}
+												editable={false}
+											/>
 									</View>
 								</ThemedView>
 								<ThemedView style={styles.container}>

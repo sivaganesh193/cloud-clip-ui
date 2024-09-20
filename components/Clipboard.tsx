@@ -3,24 +3,31 @@ import { StyleSheet, View, ScrollView, TouchableOpacity, Platform } from 'react-
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
-import { Clipboard } from '@/service/models';
-import { deleteClipboardEntry, updateTimestampInClipboard } from '@/service/firebaseService';
+import { CustomClipboard } from '@/service/models';
+import { createSharedLink, deleteClipboardEntry, updateTimestampInClipboard } from '@/service/firebaseService';
 import { truncateContent } from '@/service/util';
 import { useAuth } from '@/auth/AuthContext';
 import NoItemsComponent from './NoItems';
 import Confirmation from './Confirmation';
-import { handleShare } from '@/service/shareService';
+import { generateNanoID, getSharedLinkURL } from '@/service/shareService';
+import * as Clipboard from 'expo-clipboard';
+
 
 interface ClipboardScreenProps {
-    clipboardEntries: Clipboard[];
+    clipboardEntries: CustomClipboard[];
     showAlert: (message: string) => void
 }
 
 const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, showAlert }) => {
 
     const [confirmationVisible, setConfirmationVisible] = useState(false);
+    const [shareConfirmationVisible, setShareConfirmationVisible] = useState(false);
     const [itemToRemove, setItemToRemove] = useState("");
-    // Function to handle copy action
+    const [itemToShare, setItemToShare] = useState("");
+    const [sharedLink, setSharedLink] = useState<string | null>(null);
+    const [sharedCode, setSharedCode] = useState<string | null>(null);
+
+
     const handleDelete = (id: string) => {
         deleteClipboardEntry(id).then(async () => {
             try {
@@ -45,19 +52,74 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
         setConfirmationVisible(false);
     };
 
+    const handleShareCancel = () => {
+        setShareConfirmationVisible(false);
+    };
+
     const handleRemove = () => {
         setConfirmationVisible(false);
         handleDelete(itemToRemove);
     };
+
+    const handleShareConfirmation = async (content: string) => {
+        const code: string = generateNanoID();
+        const generatedLink = getSharedLinkURL(code);
+        setSharedCode(code);
+        setSharedLink(generatedLink); 
+        setShareConfirmationVisible(true); 
+        setItemToShare(content); 
+    };
+
+    const handleCopyLink = async () => {
+        if (itemToShare && sharedLink) {
+            const sharedRef = await createSharedLink({
+                userId: user?.uid || '',
+                content: itemToShare,
+                code: sharedCode || '',
+            });
+            await Clipboard.setString(sharedLink);
+            setShareConfirmationVisible(false);
+        } else {
+            showAlert("An unexpected error occured!");
+        }
+    };
+
+    const handleCopyCode = async () => {
+        if (itemToShare && sharedCode) {
+            await createSharedLink({
+                userId: user?.uid || '',
+                content: itemToShare,
+                code: sharedCode,
+            });
+            await Clipboard.setString(sharedCode);
+            setShareConfirmationVisible(false);
+        } else {
+            showAlert("An unexpected error occured!");
+        }
+    };
+
 
     return (
         <>
             <Confirmation
                 message="Are you sure you want to proceed?"
                 visible={confirmationVisible}
-                onConfirm={handleRemove}
-                onCancel={handleCancel} 
+                buttons={[
+                    { label: 'No', onPress: handleCancel, style: { backgroundColor: 'black' } },
+                    { label: 'Yes', onPress: handleRemove, style: { backgroundColor: 'black' } },
+                ]}
+                subtitle={''} />
+            <Confirmation
+                message={`Use this link or code for quick share!\n`}
+                subtitle={`Link: ${sharedLink || ''}\nCode: ${sharedCode || ''}`}
+                visible={shareConfirmationVisible}
+                buttons={[
+                    { label: 'Copy Link', onPress: handleCopyLink, style: { backgroundColor: 'black' } },
+                    { label: 'Copy Code', onPress: handleCopyCode, style: { backgroundColor: 'black' } },
+                    { label: 'Cancel', onPress: handleShareCancel, style: { backgroundColor: 'red' } },
+                ]}
             />
+
             <ThemedView style={styles.container}>
                 {clipboardEntries.length > 0 ? (
                     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -87,9 +149,9 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={styles.iconButton}
-                                            onPress={() => handleShare(entry.content, user, entry.deviceId, entry.deviceName, showAlert)}
+                                            onPress={() => handleShareConfirmation(entry.content)}
                                         >
-                                            <Ionicons name="share-outline" size={20} color={'black'} />
+                                            <Ionicons name="share-social-outline" size={20} color={'black'} />
                                         </TouchableOpacity>
                                     </View>
                                 </View>

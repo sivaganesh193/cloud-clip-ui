@@ -174,9 +174,11 @@ export default function Account() {
             <Confirmation
                 message="Are you sure you want to proceed?"
                 visible={confirmationVisible}
-                onConfirm={handleRemove}
-                onCancel={handleCancel}
-            />
+                buttons={[
+                    { label: 'No', onPress: handleCancel, style: { backgroundColor: 'black' } },
+                    { label: 'Yes', onPress: handleRemove, style: { backgroundColor: 'black' } },
+                ]}
+                subtitle={''} />
             <ScrollView
                 contentContainerStyle={{ flexGrow: 1 }}
                 showsVerticalScrollIndicator={false} // Optional: hides the vertical scrollbar
@@ -216,7 +218,7 @@ export default function Account() {
                     <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                         {user ? (
                             <View style={styles.content}>
-                                <ThemedText type="subtitle">Your Account</ThemedText>
+                                <ThemedText type="subtitle" style={[{color:'black'}]}>Your Account</ThemedText>
                                 <Text>{'\n'}</Text>
                                 <View style={styles.fieldContainer}>
                                     <ThemedText type="subtitle" style={styles.text}>Email</ThemedText>

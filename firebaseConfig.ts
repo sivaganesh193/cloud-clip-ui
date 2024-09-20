@@ -28,7 +28,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let auth;
+let auth: any;
 if (Platform.OS === 'web') {
     auth = getAuth(app);
 } else {

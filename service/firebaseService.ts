@@ -1,6 +1,6 @@
 import { db } from '../firebaseConfig'; // Import your Firestore instance
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where, writeBatch } from 'firebase/firestore';
-import { Clipboard, Device, Shared, User } from './models'; // Import the User interface
+import { CustomClipboard, Device, Shared, User } from './models'; // Import the User interface
 
 /**
  * Adds a user with a given ID to the Firestore users collection.
@@ -181,13 +181,13 @@ export const deleteDevice = async (id: string): Promise<void> => {
  * @param userId - The ID of the user whose clipboard entries are to be fetched.
  * @returns A promise that resolves to an array of clipboard entries.
  */
-export const fetchClipboardEntries = async (userId: string): Promise<Clipboard[]> => {
+export const fetchClipboardEntries = async (userId: string): Promise<CustomClipboard[]> => {
     try {
         const clipboardsRef = collection(db, 'clipboards');
         const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'), limit(10));
         const clipboardQuerySnapshot = await getDocs(clipboardQuery);
-        const clipboardEntries: Clipboard[] = clipboardQuerySnapshot.docs.map(doc => ({
-            ...doc.data() as Clipboard, // Spread the existing device data
+        const clipboardEntries: CustomClipboard[] = clipboardQuerySnapshot.docs.map(doc => ({
+            ...doc.data() as CustomClipboard, // Spread the existing device data
             id: doc.id // Add the doc ID as deviceId
         }));
         return clipboardEntries;
@@ -205,7 +205,7 @@ export const fetchClipboardEntries = async (userId: string): Promise<Clipboard[]
  * @param content - The actual clipboard content.
  * @returns The ID of the created clipboard document.
  */
-export const createClipboardEntry = async (clipboard: Clipboard): Promise<string> => {
+export const createClipboardEntry = async (clipboard: CustomClipboard): Promise<string> => {
     try {
         const clipboardsRef = collection(db, 'clipboards');
         const docRef = await addDoc(clipboardsRef, {
@@ -228,15 +228,15 @@ export const createClipboardEntry = async (clipboard: Clipboard): Promise<string
  * @param onUpdate - A callback function that is called with the updated clipboard entries.
  * @returns A function to unsubscribe from the real-time updates.
  */
-export const listenToClipboardEntries = (userId: string, onUpdate: (clipboards: Clipboard[]) => void) => {
+export const listenToClipboardEntries = (userId: string, onUpdate: (clipboards: CustomClipboard[]) => void) => {
     try {
         const clipboardsRef = collection(db, 'clipboards');
         const clipboardQuery = query(clipboardsRef, where('userId', '==', userId), orderBy('updatedAt', 'desc'));
 
         // Set up a real-time listener
         const unsubscribe = onSnapshot(clipboardQuery, (querySnapshot) => {
-            const clipboardEntries: Clipboard[] = querySnapshot.docs.map(doc => ({
-                ...doc.data() as Clipboard, // Spread the existing clipboard data
+            const clipboardEntries: CustomClipboard[] = querySnapshot.docs.map(doc => ({
+                ...doc.data() as CustomClipboard, // Spread the existing clipboard data
                 id: doc.id // Add the doc ID
             }));
             console.log('Refetched Clipboard Entries');
@@ -335,6 +335,20 @@ export const listenToSharedLinks = (userId: string, onUpdate: (sharedLinks: Shar
         return unsubscribe;
     } catch (error) {
         console.error('Error setting up real-time listener for shared links: ', error);
+        throw error;
+    }
+};
+
+export const deleteAllSharedLinks = async (userId: string) => {
+    try {
+        const sharedRef = collection(db, 'sharedLinks');
+        const q = query(sharedRef, where('userId', '==', userId));
+        const querySnapshot = await getDocs(q);
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        console.log('All shared links deleted successfully.');
+    } catch (error) {
+        console.error('Error deleting all shared links: ', error);
         throw error;
     }
 };
