@@ -246,7 +246,7 @@ export default function SharedLinks() {
 						<ThemedText type="defaultSemiBold" style={styles.heading}>
 							Paste your text here and click on Share to easily share text with friends!
 						</ThemedText>
-						<ThemedView style={[{ flexDirection: 'row', alignItems: 'center', gap: 20 }]}>
+						<ThemedView style={styles.inputContainer}>
 							<TextInput
 								style={styles.inputLight}
 								placeholder="Enter text to share"
@@ -275,7 +275,7 @@ export default function SharedLinks() {
 					</ThemedView>
 					<ThemedView style={[styles.containerLight]}>
 						<ThemedText type="defaultSemiBold" lightColor='black' darkColor='black' style={styles.heading}>Retrieve Text:</ThemedText>
-						<ThemedView style={[{ flexDirection: 'row', alignItems: 'center', gap: 20 }]}>
+						<ThemedView style={styles.inputContainer}>
 							<TextInput
 								style={styles.inputLight2}
 								placeholder="Enter the code here to retrieve your text"
@@ -301,8 +301,8 @@ export default function SharedLinks() {
 					</ThemedView>
 					{user && (
 						<ThemedView style={styles.containerLight}>
-							<ThemedView style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
-								<ThemedText type="defaultSemiBold" lightColor='black' darkColor='black'>
+							<ThemedView style={styles.headingContainer}>
+								<ThemedText type="defaultSemiBold" darkColor='black' lightColor='black'>
 									Recent Shared Links:
 								</ThemedText>
 								<TouchableOpacity onPress={() => showDeleteAllConfirmation()} style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -370,6 +370,8 @@ const styles = StyleSheet.create({
 	},
 	scrollContainer: {
 		padding: 10,
+		flexGrow: 1, // Allow content to grow
+		justifyContent: 'space-between', // Distribute space
 	},
 	containerLight: {
 		backgroundColor: '#fff',
@@ -396,14 +398,14 @@ const styles = StyleSheet.create({
 		elevation: 2,
 	},
 	textContainer: {
-		flex: 2, // Takes up the available space
-		marginRight: 16, // Adds some space between text and icons
+		flex: 2,
+		marginRight: 16,
 	},
 	buttonContainer: {
-		flexDirection: 'row',     // Align buttons in a row
-		justifyContent: 'flex-end',  // Align buttons to the right end
-		alignItems: 'center',     // Align buttons vertically center
-		flex: 1
+		flexDirection: 'row',
+		justifyContent: 'flex-end',
+		alignItems: 'center',
+		flex: 1,
 	},
 	button: {
 		marginLeft: 10
@@ -428,17 +430,6 @@ const styles = StyleSheet.create({
 		marginBottom: 16,
 		color: '#000',
 	},
-	inputLight: {
-		height: 40,
-		borderColor: '#000',
-		borderWidth: 1,
-		borderRadius: 8,
-		paddingHorizontal: 8,
-		backgroundColor: '#fff',
-		color: '#000',
-		marginBottom: 16,
-		width: Platform.OS === 'web' ? '70%' : '100%',
-	},
 	inputLight2: {
 		height: 40,
 		borderColor: '#000',
@@ -448,7 +439,7 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		color: '#000',
 		marginBottom: 16,
-		width: '70%',
+		width: '100%',
 		alignSelf: 'center'
 	},
 	shareButton: {
@@ -467,14 +458,6 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		marginLeft: 8,
 	},
-	tertiaryButton: {
-		flexDirection: 'row',
-		width: 150,
-		marginBottom: 15,
-		textAlign: 'left',
-		borderRadius: 8,
-		backgroundColor: '#fff',
-	},
 	tertiaryButtonText: {
 		color: '#000',
 		fontSize: 16,
@@ -483,6 +466,42 @@ const styles = StyleSheet.create({
 		textDecorationColor: 'black',
 		textDecorationStyle: 'solid',
 		textDecorationLine: 'underline'
+	},
+	headingContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		backgroundColor: '#fff',
+	},
+	inputContainer: {
+		flexDirection: Platform.OS === 'web' ? 'row' : 'column', 
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		marginBottom: 20,
+		backgroundColor: '#fff'
+	},
+	inputLight: {
+		flex: 1,
+		height: 40,
+		borderColor: '#000',
+		borderWidth: 1,
+		borderRadius: 8,
+		paddingHorizontal: 8,
+		backgroundColor: '#fff',
+		color: '#000',
+		marginBottom: 16,
+		marginRight: 10, 
+		width: '100%'
+	},
+	tertiaryButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		width: 'auto', // Adjust width for mobile
+		paddingVertical: 10,
+		paddingHorizontal: 16,
+		borderRadius: 8,
+		backgroundColor: '#fff',
+	},
 
-	}
 });
