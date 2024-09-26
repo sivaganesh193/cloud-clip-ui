@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform, Modal, TouchableWithoutFeedback, ScrollView } from 'react-native';
+import { StyleSheet, TextInput, View, Text, TouchableOpacity, SafeAreaView, FlatList, Platform, Modal, TouchableWithoutFeedback, ScrollView, Dimensions } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,7 +8,6 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createDevice, deleteDevice, fetchUser, listenToDevices, updateDevice, updateUser } from '@/service/firebaseService';
 import { getDeviceOS, removeDeviceId, setDeviceId } from '@/service/deviceService';
 import { Device } from '@/service/models';
-import * as Crypto from 'expo-crypto';
 import Header from '@/components/Header';
 import { useNavigation } from '@react-navigation/native';
 import Alert from '@/components/Alert';
@@ -19,13 +18,18 @@ import NoItemsComponent from '@/components/NoItems';
 export default function Account() {
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
-
+    const { width: screenWidth } = Dimensions.get('window');
+    const isWeb = Platform.OS === 'web';
+    const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
+    const isWebPhone = isWeb && screenWidth < 768;
     const [name, setName] = useState('');
     const [devices, setDevices] = useState<Device[]>([]); // Define the type for the state
     const [modalVisible, setModalVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [highlightIndex, setHighlightIndex] = useState(-1);
     const [formDeviceName, setFormDeviceName] = useState('');
+    const [isWideScreen, setIsWideScreen] = useState(Dimensions.get('window').width >= 768);
+
 
     const authContext = useAuth();
     if (!authContext) {
@@ -61,6 +65,10 @@ export default function Account() {
     };
 
     useEffect(() => {
+        const handleResize = () => {
+            setIsWideScreen(Dimensions.get('window').width >= 768);
+        };
+
         const initialize = async () => {
             try {
                 if (user) {
@@ -217,7 +225,7 @@ export default function Account() {
                     <Header navigation={navigation} />
                     <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                         {user ? (
-                            <View style={styles.content}>
+                            <View style={isWideScreen ? styles.wideContent : styles.narrowContent}>
                                 <ThemedText type="subtitle" style={[{ color: 'black' }]}>Your Account</ThemedText>
                                 <Text>{'\n'}</Text>
                                 <View style={styles.fieldContainer}>
@@ -252,7 +260,7 @@ export default function Account() {
                                     {devices.length > 0 ? (
                                         <FlatList
                                             data={devices}
-                                            keyExtractor={(item) => item.deviceId || Crypto.randomUUID()}
+                                            keyExtractor={(item) => item.deviceId || ''}
                                             renderItem={renderItem}
                                             contentContainerStyle={styles.listContent}
                                         />) : (
@@ -429,10 +437,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    content: {
+    wideContent: {
         flex: 1,
-        width: Platform.OS === 'web' ? '50%' : '100%', // Center content on web, full width on mobile
-        alignSelf: Platform.OS === 'web' ? 'center' : 'stretch', // Center align on web
+        alignSelf: Platform.OS === 'web' ? 'center' : 'stretch',
+        width: Platform.OS == 'web' ? '50%' : '100%'
+    },
+    narrowContent: {
+        flex: 1,
+        alignSelf: Platform.OS === 'web' ? 'center' : 'stretch',
+        width: '100%'
     },
     logoutButton: {
         marginTop: 24,

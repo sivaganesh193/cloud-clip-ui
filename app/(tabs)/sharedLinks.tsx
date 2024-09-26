@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Platform, ScrollView } from 'react-native';
+import { StyleSheet, FlatList, View, Text, TouchableOpacity, SafeAreaView, TextInput, Platform, ScrollView, Dimensions } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
@@ -10,7 +10,6 @@ import { createClipboardEntry, createSharedLink, deleteAllSharedLinks, deleteSha
 import { useAuth } from '@/auth/AuthContext';
 import { truncateContent } from '@/service/util';
 import { Shared } from '@/service/models';
-import * as Crypto from 'expo-crypto';
 import { Timestamp } from 'firebase/firestore';
 import { setClipboard } from '@/service/clipboardService';
 import useDeviceDetails from '@/hook/useDeviceDetails';
@@ -256,9 +255,7 @@ export default function SharedLinks() {
 							/>
 							<TouchableOpacity
 								style={styles.tertiaryButton}
-								// onPress={() => handleShare(textToShare, user, deviceId, deviceName, showAlert, setTextToShare)}
 								onPress={() => {
-									// Trigger confirmation before sharing
 									if (textToShare.trim()) {
 										showShareConfirmation(textToShare);
 									} else {
@@ -321,7 +318,7 @@ export default function SharedLinks() {
 									{sharedLinks.length > 0 ? (
 										<FlatList
 											data={sharedLinks}
-											keyExtractor={(item) => item.id || Crypto.randomUUID()}
+											keyExtractor={(item) => item.id || ''}
 											renderItem={({ item }) => (
 												<TouchableOpacity onPress={() => router.push(`/shared/${item.code || ''}`)}>
 													<View style={styles.itemContainerLight}>
@@ -378,8 +375,8 @@ const styles = StyleSheet.create({
 	containerLight: {
 		backgroundColor: '#fff',
 		padding: 16,
-		marginLeft: Platform.OS === 'web' ? 20 : 0,
-		marginRight: Platform.OS === 'web' ? 20 : 0,
+		marginLeft: Platform.OS === 'web' ? 10 : 0,
+		marginRight: Platform.OS === 'web' ? 10 : 0,
 	},
 	listContent: {
 		paddingBottom: 16,

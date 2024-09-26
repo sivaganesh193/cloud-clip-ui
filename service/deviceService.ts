@@ -10,7 +10,7 @@ const getAppDeviceId = async (): Promise<string> => {
         if (!deviceId) {
             deviceId = Crypto.randomUUID();
         }
-        return deviceId;
+        return deviceId || '';
     } catch (error) {
         console.error('Error getting app device ID:', error);
         throw error; // Optionally, rethrow the error if you want to propagate it

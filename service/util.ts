@@ -7,7 +7,7 @@ export const getDomain = () => {
     if (Platform.OS === 'web') {
         return window.location.origin; // Returns the domain in a web environment
     } else {
-        return Linking.getInitialURL() // Returns the domain in a React Native environment
+        return "https://cloud-clip.vercel.app/" // Returns the domain in a React Native environment
     }
 };
 

@@ -1,7 +1,7 @@
 import { setClipboard } from "./clipboardService";
 import { createClipboardEntry, createSharedLink } from "./firebaseService";
 import { getDomain } from "./util";
-import { customAlphabet, nanoid } from 'nanoid';
+import { customAlphabet } from 'nanoid/non-secure'; 
 
 export const getSharedLinkURL = (code: string): string => {
     console.log(code);
@@ -72,6 +72,5 @@ export const handleShareFromClipboard = async (content: string, showAlert: (mess
 export function generateNanoID() {
     const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const nanoid = customAlphabet(alphabet, 5);
-    const code: string = nanoid();
-    return code;
+    return nanoid(); 
 }
