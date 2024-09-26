@@ -162,13 +162,13 @@ export default function SharedLinks() {
 	};
 
 	const handleCopyLinkWithoutNewLink = async () => {
-		await Clipboard.setString(sharedLink || '');
+		Clipboard.setStringAsync(sharedLink || '');
 		setShareWithoutNewConfirmationVisible(false);
 		showAlert('Link copied to clipoard.');
 	}
 
 	const handleCopyCodeWithoutNewLink = async () => {
-		await Clipboard.setString(sharedCode || '');
+		Clipboard.setStringAsync(sharedCode || '');
 		setShareWithoutNewConfirmationVisible(false);
 		showAlert('Code copied to clipoard.');
 	}
@@ -314,40 +314,42 @@ export default function SharedLinks() {
 									)}
 								</TouchableOpacity>
 							</ThemedView>
-
-							<Text>{'\n'}</Text>
 							<View style={styles.flatListContainer}>
-								{sharedLinks.length > 0 ? (
-									<FlatList
-										data={sharedLinks}
-										keyExtractor={(item) => item.id || Crypto.randomUUID()}
-										renderItem={({ item }) => (
-											<TouchableOpacity onPress={() => router.push(`/shared/${item.code || ''}`)}>
-												<View style={styles.itemContainerLight}>
-													<View style={styles.textContainer}>
-														<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
-															{truncateContent(item.content || "")}
-														</Text>
-														<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>
-															Expires in: {calculateTimeLeft(item.expiryAt || null)}
-														</Text>
+								<ScrollView
+									scrollEnabled={true}
+									nestedScrollEnabled={true}>
+									{sharedLinks.length > 0 ? (
+										<FlatList
+											data={sharedLinks}
+											keyExtractor={(item) => item.id || Crypto.randomUUID()}
+											renderItem={({ item }) => (
+												<TouchableOpacity onPress={() => router.push(`/shared/${item.code || ''}`)}>
+													<View style={styles.itemContainerLight}>
+														<View style={styles.textContainer}>
+															<Text style={isDarkMode ? styles.itemTitleDark : styles.itemTitleLight}>
+																{truncateContent(item.content || "")}
+															</Text>
+															<Text style={isDarkMode ? styles.itemExpiryDark : styles.itemExpiryLight}>
+																Expires in: {calculateTimeLeft(item.expiryAt || null)}
+															</Text>
+														</View>
+														<View style={styles.buttonContainer}>
+															<TouchableOpacity style={styles.button} onPress={() => showConfirmation(item)}>
+																<Ionicons name="trash-outline" size={24} color={'black'} />
+															</TouchableOpacity>
+															<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
+																<Ionicons name="share-social-outline" size={24} color={'black'} />
+															</TouchableOpacity>
+														</View>
 													</View>
-													<View style={styles.buttonContainer}>
-														<TouchableOpacity style={styles.button} onPress={() => showConfirmation(item)}>
-															<Ionicons name="trash-outline" size={24} color={'black'} />
-														</TouchableOpacity>
-														<TouchableOpacity style={styles.button} onPress={() => handleShareLink(item.code)}>
-															<Ionicons name="share-social-outline" size={24} color={'black'} />
-														</TouchableOpacity>
-													</View>
-												</View>
-											</TouchableOpacity>
-										)}
-										contentContainerStyle={styles.listContent}
-									/>
-								) : (
-									<NoItemsComponent />
-								)}
+												</TouchableOpacity>
+											)}
+											contentContainerStyle={styles.listContent}
+										/>
+									) : (
+										<NoItemsComponent />
+									)}
+								</ScrollView>
 							</View>
 						</ThemedView>
 					)}
@@ -427,7 +429,7 @@ const styles = StyleSheet.create({
 		color: '#aaa',
 	},
 	heading: {
-		marginBottom: 16,
+		marginBottom: 10,
 		color: '#000',
 	},
 	inputLight2: {
@@ -468,16 +470,17 @@ const styles = StyleSheet.create({
 		textDecorationLine: 'underline'
 	},
 	headingContainer: {
+		marginBottom: Platform.OS === 'web' ? 25 : 15,
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		backgroundColor: '#fff',
 	},
 	inputContainer: {
-		flexDirection: Platform.OS === 'web' ? 'row' : 'column', 
+		flexDirection: Platform.OS === 'web' ? 'row' : 'column',
 		alignItems: 'center',
 		justifyContent: 'space-between',
-		marginBottom: 20,
+		marginBottom: Platform.OS === 'web' ? 20 : 0,
 		backgroundColor: '#fff'
 	},
 	inputLight: {
@@ -490,7 +493,7 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		color: '#000',
 		marginBottom: 16,
-		marginRight: 10, 
+		marginRight: 10,
 		width: '100%'
 	},
 	tertiaryButton: {

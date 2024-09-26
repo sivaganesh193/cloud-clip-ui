@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Platform, Text, Pressable } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,9 +65,9 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
         const code: string = generateNanoID();
         const generatedLink = getSharedLinkURL(code);
         setSharedCode(code);
-        setSharedLink(generatedLink); 
-        setShareConfirmationVisible(true); 
-        setItemToShare(content); 
+        setSharedLink(generatedLink);
+        setShareConfirmationVisible(true);
+        setItemToShare(content);
     };
 
     const handleCopyLink = async () => {
@@ -77,7 +77,7 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
                 content: itemToShare,
                 code: sharedCode || '',
             });
-            await Clipboard.setString(sharedLink);
+            Clipboard.setStringAsync(sharedLink);
             setShareConfirmationVisible(false);
         } else {
             showAlert("An unexpected error occured!");
@@ -91,7 +91,7 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
                 content: itemToShare,
                 code: sharedCode,
             });
-            await Clipboard.setString(sharedCode);
+            Clipboard.setStringAsync(sharedCode);
             setShareConfirmationVisible(false);
         } else {
             showAlert("An unexpected error occured!");
@@ -122,7 +122,9 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
 
             <ThemedView style={styles.container}>
                 {clipboardEntries.length > 0 ? (
-                    <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <ScrollView contentContainerStyle={styles.scrollContainer}
+                        scrollEnabled={true}
+                        nestedScrollEnabled={true}>
                         {clipboardEntries.map((entry, index) => (
                             <TouchableOpacity
                                 onPress={() => handleClickEntry(entry.id || '')}
@@ -158,6 +160,7 @@ const ClipboardScreen: React.FC<ClipboardScreenProps> = ({ clipboardEntries, sho
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
+
                 ) : (
                     <NoItemsComponent></NoItemsComponent>
                 )}
@@ -170,13 +173,13 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: '#fff',
         marginTop: 16,
-        borderColor: 'black',
-        borderWidth: 1,
+        // borderColor: 'black',
+        // borderWidth: 1,
         height: 300,
-        padding: 10,
+        // padding: 10,
     },
     scrollContainer: {
-        padding: 10,
+        padding: 0,
     },
     entryContainer: {
         flexDirection: 'row',

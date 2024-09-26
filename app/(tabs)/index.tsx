@@ -140,6 +140,14 @@ export default function Homepage() {
 		initialize();
 	}, [user, deviceId]);
 
+	const inputRef = useRef(null);
+
+	useEffect(() => {
+		if (inputRef.current) {
+			(inputRef.current as any).focus();
+		}
+	}, []);
+
 	return (
 		<>
 			<Alert message={alertMessage} visible={alertVisible} />
@@ -176,13 +184,15 @@ export default function Homepage() {
 											</TouchableOpacity>
 										</View>
 									</View>
-									<View style={styles.textBox}>
-											<TextInput
-												style={[styles.text, styles.textInput]}
-												value={data.content || ''}
-												multiline={true}
-												editable={false}
-											/>
+									<View style={styles.catContainer}>
+										<View style={styles.catBody}>
+											<ScrollView
+												scrollEnabled={true}
+												nestedScrollEnabled={true}
+											>
+												<Text style={styles.catBodyText}>{data.content}</Text>
+											</ScrollView>
+										</View>
 									</View>
 								</ThemedView>
 								<ThemedView style={styles.container}>
@@ -197,14 +207,26 @@ export default function Homepage() {
 											</TouchableOpacity>
 										</View>
 									</View>
-									<View style={styles.textBox}>
-										<TextInput
-											style={[styles.text, styles.textInput]}
-											value={saveTextData}
-											onChangeText={setSaveTextData}
-											multiline={true} // Allows text to wrap and expand vertically
-											editable={true} // Makes the text input editable
-										/>
+									<View style={styles.catContainer}>
+										<View style={styles.catBody}>
+											<ScrollView
+												scrollEnabled={true}
+												nestedScrollEnabled={true}
+											>
+												<TextInput
+													ref={inputRef}
+													style={[
+														{ height: 198, padding: 10, textAlignVertical: 'top' }
+													]}
+													placeholder='Enter your text here...'
+													value={saveTextData}
+													onChangeText={setSaveTextData}
+													multiline={true} // Allows text to wrap and expand vertically
+													editable={true} // Makes the text input editable
+													selectionColor={'black'}
+												/>
+											</ScrollView>
+										</View>
 									</View>
 								</ThemedView>
 								<ThemedView style={styles.container}>
@@ -229,6 +251,18 @@ export default function Homepage() {
 }
 
 const styles = StyleSheet.create({
+	catBody: {
+		height: 200,
+		borderWidth: 1,
+		borderColor: '#ccc',
+		borderRadius: 4,
+		overflow: 'hidden'
+	},
+	catBodyText: {
+		padding: 10,
+		fontSize: 16,
+		color: 'black',
+	},
 	safeArea: {
 		flex: 1,
 		backgroundColor: '#fff',
@@ -240,12 +274,18 @@ const styles = StyleSheet.create({
 	centerContainer: {
 		backgroundColor: '#fff',
 		padding: Platform.OS === 'web' ? 16 : 5,
-		paddingTop: 0,
+		paddingTop: 2,
+		borderRadius: 16,
+	},
+	catContainer: {
+		backgroundColor: '#fff',
+		// padding: Platform.OS === 'web' ? 16 : 5,
+		paddingTop: 2,
 		borderRadius: 16,
 	},
 	container: {
 		backgroundColor: '#fff',
-		padding: 16,
+		padding: 10,
 		borderRadius: 16,
 		overflow: 'hidden'
 	},
@@ -330,19 +370,6 @@ const styles = StyleSheet.create({
 	buttonContainer: {
 		flexDirection: 'row',
 		marginLeft: 10,
-	},
-	textBox: {
-		flex: 0.5,
-		borderColor: '#000',
-		borderRadius: 0
-	},
-	textInput: {
-		minHeight: 100,
-		flex: 0.5,
-		borderWidth: 1,
-		borderColor: '#000',
-		textAlignVertical: 'top',
-		padding: 10,
 	},
 	headerWithButton: {
 		flexDirection: 'row',

@@ -218,7 +218,7 @@ export default function Account() {
                     <ThemedView style={isDarkMode ? styles.containerDark : styles.containerLight}>
                         {user ? (
                             <View style={styles.content}>
-                                <ThemedText type="subtitle" style={[{color:'black'}]}>Your Account</ThemedText>
+                                <ThemedText type="subtitle" style={[{ color: 'black' }]}>Your Account</ThemedText>
                                 <Text>{'\n'}</Text>
                                 <View style={styles.fieldContainer}>
                                     <ThemedText type="subtitle" style={styles.text}>Email</ThemedText>

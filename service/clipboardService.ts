@@ -7,7 +7,7 @@ import * as Clipboard from 'expo-clipboard';
 export const setClipboard = async (text: string | null, showAlert: (message: string) => void, alertMessage: string): Promise<void> => {
     if (text) {
         try {
-            await Clipboard.setStringAsync(text);
+            Clipboard.setStringAsync(text);
             showAlert(alertMessage);
         } catch (error) {
             showAlert('An unexpected error occured');
